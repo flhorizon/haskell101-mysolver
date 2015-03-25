@@ -6,24 +6,28 @@
 BIN = mySolver
 
 SRCD = src
-SRC_ = Main.hs MyPolynome.hs
+SRC_ = MyPolynome.hs Main.hs
 SRC = $(addprefix $(SRCD)/, $(SRC_))
 
 OBJD = obj
-OBJ_ = $(SRC_: .hs=.o)
+OBJ_ = $(SRC_:.hs=.o)
 OBJ = $(addprefix $(OBJD)/, $(OBJ_))
-IFACE_ = $(SRC_: .hs=.hi)
+IFACE_ = $(SRC_:.hs=.hi)
 IFACE = $(addprefix $(OBJD)/, $(IFACE_))
 
-GHCFLAGS = -O -odir $(OBJD) -hidir $(OBJD)
+GHCFLAGS = -O 
+
+
 
 all: $(OBJD) $(BIN)
 
+
 $(BIN): $(OBJ)
+	ghc -o $(BIN) -i$(OBJD) $^
 
 
 $(OBJD)/%.o: $(SRCD)/%.hs
-	ghc $(GHCFLAGS) $< -o $@
+	ghc $(GHCFLAGS) -c -outputdir $(OBJD) -i$(OBJD) $<
 
 
 $(OBJD):

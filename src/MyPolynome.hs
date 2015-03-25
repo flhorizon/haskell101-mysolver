@@ -1,5 +1,5 @@
 
-module MyPolynom where
+module MyPolynome where
 
 import Data.Complex
 import Data.List
