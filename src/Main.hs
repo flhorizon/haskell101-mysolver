@@ -1,4 +1,3 @@
-
 import MyPolynome
 import Data.Complex
 
@@ -20,7 +19,10 @@ main = do
 
 --	print $ isQuadratic $ (Member (-1) (-1)):(Member (-1) (1)):[]
 
-	let lolPoly = canonicalQuadratic $ (Member 666 (-69)):concat( [poly, canonicalQuadratic ( [] )] )
-	print ( lolPoly )
-	let roots = solveQuadratic poly
+	let lolPoly = (Member 666 (-69)):concat( [poly, canonicalQuadratic ( [] )] )
+--	putStrLn $ MyPolynome.showList lolPoly $ []
+	print lolPoly
+	let roots = solveQuadratic lolPoly
 			in putStrLn $ showSolution roots
+	print (5 :*^: 1)
+--	print $ read "(0.0 * X ^ 0)"

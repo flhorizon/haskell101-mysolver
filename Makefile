@@ -15,7 +15,7 @@ OBJ = $(addprefix $(OBJD)/, $(OBJ_))
 IFACE_ = $(SRC_:.hs=.hi)
 IFACE = $(addprefix $(OBJD)/, $(IFACE_))
 
-GHCFLAGS = -O 
+GHCFLAGS = -O
 
 
 
