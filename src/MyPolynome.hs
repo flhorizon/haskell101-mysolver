@@ -13,7 +13,6 @@ type Polynome = [Monome]
 
 -- Pretty Monome and [Monome] (aka Polynome) Show.
 instance Show Monome where
-	show monome = shows monome $ []
 	showsPrec prec (Monome c p) = showsPrec prec (c :*^: p)
 	showsPrec _ (c :*^: p) = ('(':) . shows c . (" * X ^ " ++) . shows p . (')':) 
 	showList []  = ("" ++)
