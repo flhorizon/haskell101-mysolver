@@ -1,0 +1,5 @@
+Handle non-0 right hand ( Expr = \{0} ) and special cases ( 0 = 0 -> roots = |R )
+Echo Reduced form.
+Echo order.
+Discriminant sign "if relevant"
+PARSER FFS
