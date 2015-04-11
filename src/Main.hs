@@ -1,25 +1,31 @@
 import MyPolynome
 import Data.Complex
 
-showSolution :: (Complex Float, Complex Float) -> [Char]
+showSolution :: (Complex Float, Complex Float) -> String
 showSolution (c1, c2)
-	| c1 == c2 = "Dual root is " ++ showComplex ( c1 )
-	| imagPart ( c1 ) /= 0 || imagPart ( c2 ) /= 0 = "Two complex roots : " ++ showComplex (c1 ) ++ ",\t" ++ showComplex ( c2 )
-	| otherwise = "Two real roots : " ++ showComplex (c1 ) ++ ",\t" ++ showComplex ( c2 )
+	| c1 == c2 = ("Dual root is \n" ++) . showsComplex ( c1 ) $ []
+	| imagPart ( c1 ) /= 0 || imagPart ( c2 ) /= 0 = ("Two complex roots :\n" ++) . showsComplex (c1 ) . ('\n':) . showsComplex ( c2 ) $ []
+	| otherwise = ("Two real roots :\n" ++) . showsComplex (c1 ) . ('\n':) . showsComplex ( c2 ) $ []
 
+
+-- TODO : Reduce phase. Remove canonical enforcement for out-of-bounds orders.
 
 main :: IO ()
 main = do	
-	let poly = [m1, m2, m2', m3]
+	let eq@(Equation (poly,eqpol)) = Equation ([m1, m2, m2', m3], [ma, mb])
 		where
 		 m1 = Monome (-3.5) 2
 		 m2 = Monome 1 1
 		 m2' = Monome (-0.5) 1
 		 m3 = Monome (1/3) 0
+		 ma = (5/6) :*^: 0
+		 mb = (1) :*^: 1
 
 --	print $ isQuadratic $ (Monome (-1) (-1)):(Monome (-1) (1)):[]
 
-	let lolPoly = (Monome 666 (-69)):concat( [poly, canonicalQuadratic ( [] )] )
+	print eq
+
+	let lolPoly = canonicalQuadratic $ (Monome 666 (-69)):concat( [poly, canonicalQuadratic ( [] )] )
 --	putStrLn $ MyPolynome.showList lolPoly $ []
 	print lolPoly
 	let roots = solveQuadratic lolPoly

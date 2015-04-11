@@ -11,20 +11,32 @@ data Monome = Monome Float Int | Float :*^: Int
 
 type Polynome = [Monome] 
 
+newtype Equation = Equation { getEquation :: (Polynome, Polynome) }
+ deriving (Ord, Eq)
+
 -- Pretty Monome and [Monome] (aka Polynome) Show.
 instance Show Monome where
 	showsPrec prec (Monome c p) = showsPrec prec (c :*^: p)
-	showsPrec _ (c :*^: p) = ('(':) . shows c . (" * X ^ " ++) . shows p . (')':) 
-	showList []  = ("" ++)
+	showsPrec _ (c :*^: p) = shows c . (" * X^" ++) . shows p
+	showList []  = ("{Empty set}" ++)
 	showList (mn:[]) = shows mn
+	showList (m1:(c :*^: p):ms) = showList (m1:(Monome c p):ms)
 	showList (m1:(m2@(Monome c2 p2)):ms) = shows m1 . signBridge . next
 	 where
+	  lstHead = shows m1. signBridge . next
 	  signBridge
 	   | c2 < 0 = (" - " ++)
 	   | otherwise = (" + " ++)
 	  next
 	   | c2 < 0 = showList ((Monome (-c2) p2):ms)
 	   | otherwise = showList (m2:ms)
+
+
+instance Show Equation where
+	showsPrec _ (Equation (pl, pr)) = memb pl . showString " = " . memb pr
+	 where
+	  memb [] = ('0':)
+	  memb p  = shows p
 
 --instance Read Monome where
 --	readPrec
@@ -37,14 +49,14 @@ mbrPower :: Monome -> Int
 mbrPower ( Monome _ p ) = p
 
 
-showComplex :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> [Char]
-showComplex c = show a ++ img
+showsComplex :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> ShowS
+showsComplex c = shows a . img
 	where
 	 a = realPart c
 	 img
-	  | b < 0 = " - " ++ show (-b) ++ "i"
-	  | b > 0 = " + " ++ show b ++ "i"
-	  | b == 0 = ""
+	  | b < 0 = (" - " ++) . shows (-b) . ('i':)
+	  | b > 0 = (" + " ++) . shows b . ('i':)
+	  | b == 0 = showString ""
 	  where
 	   b = imagPart c
 
@@ -81,8 +93,8 @@ canonicalQuadratic :: Polynome -> Polynome
 canonicalQuadratic poly = smashedPoly
 	where
 	 cleanedPoly = filter (\m -> mbrPower ( m ) >= 0 && mbrPower ( m ) <= 2 ) poly
-	 enrichedPoly = (Monome 0 2):(Monome 0 1):(Monome 0 0):cleanedPoly
-	 sortedPoly = sortBy (\a b -> mbrPower ( b ) `compare` mbrPower ( a ) ) enrichedPoly
+	 enrichedPoly = (Monome 0 0):(Monome 0 1):(Monome 0 2):cleanedPoly
+	 sortedPoly = sortBy (\a b -> mbrPower ( a ) `compare` mbrPower ( b ) ) enrichedPoly
 	 smashedPoly = polynomeSmash sortedPoly
 
 
