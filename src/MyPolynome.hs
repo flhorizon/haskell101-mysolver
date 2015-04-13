@@ -5,7 +5,7 @@ module MyPolynome
 import Data.Complex
 import Data.List
 
-infix 5 :*^:
+infixl 1 :*^:
 data Monome = Monome Float Int | Float :*^: Int
  deriving (Ord, Eq)
 
@@ -23,7 +23,6 @@ instance Show Monome where
 	showList (m1:(c :*^: p):ms) = showList (m1:(Monome c p):ms)
 	showList (m1:(m2@(Monome c2 p2)):ms) = shows m1 . signBridge . next
 	 where
-	  lstHead = shows m1. signBridge . next
 	  signBridge
 	   | c2 < 0 = (" - " ++)
 	   | otherwise = (" + " ++)
@@ -43,9 +42,11 @@ instance Show Equation where
 
 
 mbrCoeff :: Monome -> Float
+mbrCoeff ( c :*^: _ ) = c
 mbrCoeff ( Monome c _ ) = c
 
 mbrPower :: Monome -> Int
+mbrPower ( _ :*^: p ) = p
 mbrPower ( Monome _ p ) = p
 
 
@@ -86,6 +87,12 @@ isQuadratic poly
 	 where
 	  pow = mbrPower ( head poly )
 
+sortPolynome :: Polynome -> Polynome
+sortPolynome = sortBy (\a b -> let comparePower = mbrPower ( a ) `compare` mbrPower ( b )
+				  in if (comparePower /= EQ)
+					then comparePower
+					else mbrCoeff ( a ) `compare` mbrCoeff ( b )
+					)
 
 -- Make it aX^2 + bX + c ; cut the garbage, insert missing Monomes (power 0->2).
 -- Resulting Polynome is in the form (m2:m1:m0:[])
@@ -94,8 +101,7 @@ canonicalQuadratic poly = smashedPoly
 	where
 	 cleanedPoly = filter (\m -> mbrPower ( m ) >= 0 && mbrPower ( m ) <= 2 ) poly
 	 enrichedPoly = (Monome 0 0):(Monome 0 1):(Monome 0 2):cleanedPoly
-	 sortedPoly = sortBy (\a b -> mbrPower ( a ) `compare` mbrPower ( b ) ) enrichedPoly
-	 smashedPoly = polynomeSmash sortedPoly
+	 smashedPoly = polynomeSmash $ sortPolynome enrichedPoly
 
 
 discriminantQuadratic :: (Num n) => (n, n, n) -> n
@@ -123,3 +129,11 @@ solveQuadratic supposedQuadratic =
 		c1 = mbrCoeff m1;
 		c0 = mbrCoeff m0
 		in roots (c2, c1, c0)
+
+yankLeft :: Equation -> Equation
+yankLeft eq@( Equation (_, []) ) = eq
+yankLeft (Equation (pl, pr)) = Equation (sortPolynome $ pl ++ pr, [])
+
+-- Idea : compare 0 order monomes both side
+-- absurdity :: Equation -> Maybe Equation
+-- absurdity

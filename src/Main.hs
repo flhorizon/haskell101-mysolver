@@ -12,18 +12,20 @@ showSolution (c1, c2)
 
 main :: IO ()
 main = do	
-	let eq@(Equation (poly,eqpol)) = Equation ([m1, m2, m2', m3], [ma, mb])
+	let eq@(Equation (poly,rpol)) = Equation ([m1, m2, m3], [ma, mb])
 		where
 		 m1 = Monome (-3.5) 2
 		 m2 = Monome 1 1
-		 m2' = Monome (-0.5) 1
 		 m3 = Monome (1/3) 0
-		 ma = (5/6) :*^: 0
-		 mb = (1) :*^: 1
+		 ma = (-1) :*^: 1
+		 mb = (0) :*^: 1
 
 --	print $ isQuadratic $ (Monome (-1) (-1)):(Monome (-1) (1)):[]
 
-	print eq
+	print  eq
+	print  poly
+	print  rpol
+	print $ yankLeft eq
 
 	let lolPoly = canonicalQuadratic $ (Monome 666 (-69)):concat( [poly, canonicalQuadratic ( [] )] )
 --	putStrLn $ MyPolynome.showList lolPoly $ []

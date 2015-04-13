@@ -6,3 +6,8 @@ Echo order.
 Echo "won't solve" if not canonical.
 Echo Discriminant sign --"if relevant"--
 PARSER FFS
+
+Right now, resolution depends on parameter order... wich sucks !
+It requires several layers of data validation and formatting; with numerous silent failure cases.
+A Polynome should be, for each power value, a list of values (each monome's coeff. for a given power).
+Validation and formatting should be easier.
