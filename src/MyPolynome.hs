@@ -7,13 +7,14 @@ import Data.List
 
 infixl 1 :*^:
 data Monome = Monome Float Int | Float :*^: Int
- deriving (Ord, Eq)
+ deriving (Ord, Eq, Show)
 
 type Polynome = [Monome] 
 
 newtype Equation = Equation { getEquation :: (Polynome, Polynome) }
  deriving (Ord, Eq)
 
+{-
 -- Pretty Monome and [Monome] (aka Polynome) Show.
 instance Show Monome where
 	showsPrec prec (Monome c p) = showsPrec prec (c :*^: p)
@@ -29,7 +30,7 @@ instance Show Monome where
 	  next
 	   | c2 < 0 = showList ((Monome (-c2) p2):ms)
 	   | otherwise = showList (m2:ms)
-
+-}
 
 instance Show Equation where
 	showsPrec _ (Equation (pl, pr)) = memb pl . showString " = " . memb pr

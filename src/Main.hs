@@ -1,8 +1,9 @@
 import MyPolynome
+import MyPolynome.Print
 import Data.Complex
 
-showSolution :: (Complex Float, Complex Float) -> String
-showSolution (c1, c2)
+prettyPrintSolution :: (Complex Float, Complex Float) -> String
+prettyPrintSolution (c1, c2)
 	| c1 == c2 = ("Dual root is \n" ++) . showsComplex ( c1 ) $ []
 	| imagPart ( c1 ) /= 0 || imagPart ( c2 ) /= 0 = ("Two complex roots :\n" ++) . showsComplex (c1 ) . ('\n':) . showsComplex ( c2 ) $ []
 	| otherwise = ("Two real roots :\n" ++) . showsComplex (c1 ) . ('\n':) . showsComplex ( c2 ) $ []
@@ -29,9 +30,9 @@ main = do
 
 	let lolPoly = canonicalQuadratic $ (Monome 666 (-69)):concat( [poly, canonicalQuadratic ( [] )] )
 --	putStrLn $ MyPolynome.showList lolPoly $ []
-	print lolPoly
+	putStrLn $ prettyPolynome lolPoly
 	let roots = solveQuadratic lolPoly
-			in putStrLn $ showSolution roots
+			in putStrLn $ prettyPrintSolution roots
 --	let inp = read "(5.0 * X ^ 1)"
 	return ()
 --	print $ read "(0.0 * X ^ 0)"
