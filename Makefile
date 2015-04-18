@@ -6,16 +6,14 @@
 BIN = mySolver
 
 SRCD = src
-SRC_ = MyPolynome.hs MyPolynome/Print.hs Main.hs 
+SRC_ = MyPolynomial.hs MyPolynomial/Print.hs Main.hs 
 SRC = $(addprefix $(SRCD)/, $(SRC_))
 SRCSUBD = $(addprefix $(SRCD)/, $(SUBDIRS))
-
-DEPEND_FILE = depend.mk
 
 SPACE = $(eval) $(eval)
 IMPORT_LIST = $(subst $(SPACE),:,$(SRCSUBD))
 
-SUBDIRS := MyPolynome
+SUBDIRS := MyPolynomial
 
 OBJD = obj
 OBJSUBD = $(addprefix $(OBJD)/, $(SUBDIRS))

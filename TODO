@@ -1,13 +1,11 @@
 Handle non-0 right hand ( Expr = \{0} )
 	and special cases ( 0 = 0 -> roots = |R )
-			  ( aX^0 = 0  -> Absurd )
-Echo Reduced form.
-Echo order.
-Echo "won't solve" if not canonical.
-Echo Discriminant sign --"if relevant"--
-PARSER FFS
+			  ( aX^0 = 0  -> Absurd ) -- OK
+Echo Reduced form. -- EZ
+Echo order. -- EZ
+Echo "won't solve" if not canonical. -- almost
+Echo Discriminant sign --"if relevant"-- TODO; trivial
+PARSER FFS. Lol.
 
-Right now, resolution depends on parameter order... wich sucks !
-It requires several layers of data validation and formatting; with numerous silent failure cases.
-A Polynome should be, for each power value, a list of values (each monome's coeff. for a given power).
-Validation and formatting should be easier.
+Next : Polynomials as a map of lists (int i : [(cn :*^: i)]) ; assert with lookupLT 0 / lookupGT 2
+Next++ : embed with Writer to log tests and progress
