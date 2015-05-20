@@ -4,7 +4,12 @@
 BIN = mySolver
 
 SRCD = src
-SRC_ = Data/MyPolynomial.hs Data/MyPolynomial/Print.hs Data/MyPolynomial/Parse.hs Main.hs 
+SRC_ = Data/MyPolynomial.hs \
+       Data/MyPolynomial/Print.hs \
+       Data/MyPolynomial/Parser.hs \
+       Data/MyPolynomial/Type.hs \
+       Main.hs 
+
 SRC = $(addprefix $(SRCD)/, $(SRC_))
 SRCSUBD = $(addprefix $(SRCD)/, $(SUBDIRS))
 
