@@ -1,33 +1,33 @@
 
-module MyPolynomial
- where
+module Data.MyPolynomial (
+	Monomial ((:*^:))
+	, (*^)
+	, Equation(Eq)
+	, getEq
+	, getL
+	, getR
+	, Polynomial
+	, Roots
+	, mbrCoeff
+	, mbrPower
+	, polynomeSmash
+	, isQuadratic
+	, canonicalQuadratic
+	, discriminantQuadratic
+	, roots
+	, solveQuadratic
+	, yankLeft
+--	, absurdity
+	) where
 
 import Data.Complex
 import Data.List
+import Control.Applicative
+import Data.MyPolynomial.Type
+import Data.MyPolynomial.Parser
 
-infixl 1 :*^:
-data Monomial = Float :*^: Int
-  deriving (Eq)
-
-type Polynomial = [Monomial] 
 
 type Roots = (Complex Float, Complex Float)
-
-newtype Equation = Equation { getEquation :: (Polynomial, Polynomial) }
-
-instance Ord Monomial where
-  m1@(c1 :*^: p1) `compare` m2@(c2 :*^: p2)
-    | m1 == m2 = EQ
-    | (p1 < p2) || ((p1 == p2) && (c1 < c2)) = LT
-    | (p1 > p2) || ((p1 == p2) && (c1 > c2)) = GT
-
-
-mbrCoeff :: Monomial -> Float
-mbrCoeff ( c :*^: _ ) = c
-
-mbrPower :: Monomial -> Int
-mbrPower ( _ :*^: p ) = p
-
 
 -- Sums adjacent Monomials of equal power.
 polynomeSmash :: Polynomial -> Polynomial
@@ -92,17 +92,27 @@ solveQuadratic supposedQuadratic =
 		in Right $ roots (c2, c1, c0)
 
 yankLeft :: Equation -> Equation
-yankLeft (Equation (lp, rp)) = Equation (sort $ lp ++ (flip rp), [])
+yankLeft (Eq (lp, rp)) = Eq (sort $ lp ++ (flip rp), [])
   where
     flip [] = []
     flip ((c :*^: p):rpn) = ((-c) :*^: p):flip(rpn)
 
--- Assume yanked left, sorted, condensed equation
-absurdity :: Equation -> Maybe Equation
-absurdity eq =
-  let (pl, pr) = getEquation eq in
-    if (mbrPower ( last pl ) > 0 || pl == pr)
-      then
-	   Just eq
-      else
-	   Nothing
+-- Assume yanked left, sorted, condensed equation 
+ -- absurdity :: Equation -> Maybe Equation
+ -- absurdity eq@(Eq (l, r)) =
+ --   let strip = filter (\m -> mbrCoeff m == 0);
+ --       (spl, spr) = (strip l, strip r )
+ --     in if (mbrPower ( spl ) > 0 || spl == spr)
+ --        then
+ -- 	   Just eq
+ --        else
+ -- 	   Nothing
+
+
+ -- instance Read Monomial where
+ -- 	readsPrec _ = readsMonomial
+ -- 	readList = readsPolynomial
+ -- 	
+ -- instance Read Equation where
+ -- 	readsPrec _ = readsEquation
+

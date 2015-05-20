@@ -5,7 +5,9 @@ Echo Reduced form. -- EZ
 Echo order. -- EZ
 Echo "won't solve" if not canonical. -- almost
 Echo Discriminant sign --"if relevant"-- TODO; trivial
-PARSER FFS. Lol.
 
-Next : Polynomials as a map of lists (int i : [(cn :*^: i)]) ; assert with lookupLT 0 / lookupGT 2
-Next++ : embed with Writer to log tests and progress
+V - Finish directory structure (& build) refactoring
+V - Finish parser integration ( see prototype Mk II ) 
+  - Check feature consistency vs specs
+  + Use Monads to log error and handle failures. Transformers ? 
+  ++ More detailed parser error messages

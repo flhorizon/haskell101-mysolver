@@ -1,19 +1,17 @@
 # ffourati@student.42.fr
 # Created 03/25/2015 02:35
 
-.PHONY: all clean fclean re depend
-
 BIN = mySolver
 
 SRCD = src
-SRC_ = MyPolynomial.hs MyPolynomial/Print.hs Main.hs 
+SRC_ = Data/MyPolynomial.hs Data/MyPolynomial/Print.hs Data/MyPolynomial/Parse.hs Main.hs 
 SRC = $(addprefix $(SRCD)/, $(SRC_))
 SRCSUBD = $(addprefix $(SRCD)/, $(SUBDIRS))
 
 SPACE = $(eval) $(eval)
 IMPORT_LIST = $(subst $(SPACE),:,$(SRCSUBD))
 
-SUBDIRS := MyPolynomial
+SUBDIRS := Data Data/MyPolynomial 
 
 OBJD = obj
 OBJSUBD = $(addprefix $(OBJD)/, $(SUBDIRS))
@@ -44,3 +42,5 @@ fclean: clean
 
 re: fclean all
 
+
+.PHONY: all clean fclean re

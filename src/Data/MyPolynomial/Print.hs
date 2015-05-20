@@ -1,8 +1,8 @@
 
-module MyPolynomial.Print
- where
+module Data.MyPolynomial.Print
+	where
 
-import MyPolynomial
+import Data.MyPolynomial.Type
 import Data.Complex
 
 ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ prettyPolynomial p = prettyPolynomialS p []
 ---------------------------------------------------------------------------
 
 prettyEquationS :: Equation -> ShowS
-prettyEquationS (Equation (pl, pr)) = memb pl . showString " = " . memb pr
+prettyEquationS (Eq (pl, pr)) = memb pl . showString " = " . memb pr
  where
   memb [] = ('0':)
   memb p  = prettyPolynomialS p
