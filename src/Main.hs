@@ -1,38 +1,28 @@
 
 import System.Environment (getArgs)
+import System.IO (hPutStrLn, stderr)
 
 import Data.MyPolynomial
 import Data.MyPolynomial.Parser
 import Data.MyPolynomial.Print
 
-instance Show Monomial where
-	showsPrec _ = prettyMonomialS
-	showList = prettyPolynomialS
+ -- instance Show Monomial where
+ -- 	showsPrec _ = prettyMonomialS
+ -- 	showList = prettyPolynomialS
+ -- 
+ -- instance Show Equation where
+ -- 	showsPrec _ = prettyEquationS
 
-instance Show Equation where
-	showsPrec _ = prettyEquationS
+processArgs :: IO (Either () String)
+processArgs = do
+	args <- getArgs
+	if (length args /= 1)
+		then return $ Left ()
+		else return $ Right (head args)
 
+main :: IO ()
 main = do
-  	let input = "  -55 * X ^  0    "
-  	let in4 = (unwords $ take 4 $ repeat input )
-  
-  
-  	print $ readsMonomial input
-  	print $ readsMonomial "-1234 * x ^ 3"
-  
-  	let ls = [ (a *^ 2) | a <- [-2..3] ]
-  
-  	print ls
-  	putStrLn []
-  	print $ readsPolynomial $ show ls
-  	print $ in4
-  
-  	let hq = Eq (ls, fst . head $ readsPolynomial in4)
-  	print hq
-  	putStrLn []
-  	print $ fst . head $ readsEquation ( show hq )
-  	
-  	putStrLn "\nReal now ? \n"
-  	l <- getArgs >>= (\(a:as) -> return a)
-  	print $ readEquation l
-  	print $ readsEquation l
+	let error _ = hPutStrLn stderr "Usage: ./mySolver <quadratic equation>"
+	    proceed a = do
+		putStrLn $ prettyEquation $ readEquation a
+	  in processArgs >>= either error proceed
