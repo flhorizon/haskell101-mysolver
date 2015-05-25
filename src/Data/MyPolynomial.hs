@@ -19,6 +19,9 @@ module Data.MyPolynomial (
 	, toMap
 	, absurd
 	, divergent
+	, BroadSol(Absurd, Real)
+	, Solution(Quadratic, Simple, Broad)
+	, solveEquation
 	) where
 
 import Data.Complex (Complex((:+)))
@@ -58,11 +61,11 @@ squeeze poly = runReader (doSqueeze poly) (powers poly)
 		powers pl = nub $ fmap mbrPower pl
 
 		-- Every @mn@ in @pl@ whose power is equal to the provided @pw@.
-		samePower pw pl = partition (\m -> mbrPower m == pw) pl) 
+		samePower pw pl = partition (\m -> mbrPower m == pw) pl 
 
 		-- For each the provided power @pw@, partition out bros of power p, sum them, add them back to the other partition.
 		foldPower pw pl = let	(bros, others) = samePower pw pl
-					brogogo = foldr (\macc (m:_) -> head $ macc +^+ m) (zeroP pw) bros
+					brogogo = foldr (\ m macc -> head $ macc +^+ m) (zeroP pw) bros
 					in (brogogo:others)
 
 		-- Pseudo type annotation : 
@@ -71,61 +74,64 @@ squeeze poly = runReader (doSqueeze poly) (powers poly)
 			e:es <- ask
 			let pl' = foldPower e pl
 			  in case es of	[] -> return pl'
-					_ -> local (\ _:en -> en ) (doStuff pl')
+					_ -> local (\ (_:en) -> en ) (doSqueeze pl')
 
  -- Returns a, b, c coefficients as in the canonical expression aX^2 + bX + c
- -- Returns triple NaN if matching fails.
 getABC :: M.IntMap Float -> (Float, Float, Float)
-getABC fromList [(0, c), (1, b), (2, a)] = (a, b, c)
-getABC _ = (sqrt (-1), sqrt (-1), sqrt (-1))
+getABC mmap = (mmap M.! 2, mmap M.! 1, mmap M.! 0)
 
 
  -- Takes a condensed quadratic list polynomial; calls error otherwise.
 toMap :: Polynomial -> M.IntMap Float
 toMap pl = mapIt $ sort $ squeeze pl
 	where
-	  mapIt [(c0 :*^: p0):(c1 :*^: p1):(c2 :*^: p2)] = M.fromList [(p0, c0), (p1, c1), (p2, c2)]
+	  mapIt [(c0 :*^: p0), (c1 :*^: p1), (c2 :*^: p2)] = M.fromList [(p0, c0), (p1, c1), (p2, c2)]
 	  mapIt _ = error "Uncondensed or non-quadratic list polynomial."
 
 
- -- Expects a canonical quadratic representation; returns NaN otherwise.
+ -- Expects a canonical quadratic representation
 discriminantQuadratic :: M.IntMap Float -> Float
-discriminantQuadratic fromList [(0, c), (1, b), (2, a)] = (b ^ 2.0 - 4.0 * a * c)
-discriminantQuadratic _ = sqrt (-1)
+discriminantQuadratic mmap = let  (a, b, c) = getABC mmap
+				in (b ^ 2 - 4.0 * a * c)
+
 
 data BroadSol = Absurd | Real
 data Solution = Quadratic Roots | Simple Float | Broad BroadSol
 
 solveEquation :: Equation -> Solution
-solveEquation map | (M.fromList [(0, c), (1, b), (2, a)]) <- map	= caseQ a b c
-		  | (M.fromList [(0, c), (1, b)]) <- map		= caseS bc
-		  | (M.singleton (0, c)) <- map				= broad
+solveEquation eq = (doSolve . toMap . getL . canonify) eq
   where
-    quadratic = Quadratic ( roots map )
-    simple = Simple ( solveDeg1 map )
-    broad = Broad broadSolve
-    caseQ a b c	| a /= 0 = quadratic
-		| a == 0 && b /= 0 = simple
-		| a == 0 && b == 0 = broad
-    caseS b c	| b /= 0 = simple  
-    		| b == 0 = broad
+    doSolve mmap = let 	a = mmap M.! 2
+    			b = mmap M.! 1
+			c = mmap M.! 0
+		    in dispatch a b c mmap
+    quadratic m = Quadratic ( roots m )
+    simple m = Simple ( solveDeg1 m )
+    broad m = Broad ( broadSolve m )
+    dispatch a b c m	| a /= 0 = quadratic m
+			| a == 0 && b /= 0 = simple m
+			| a == 0 && b == 0 = broad m
 
 
+broadSolve :: M.IntMap Float -> BroadSol
+broadSolve mmap	= case mmap M.! 0 of	0 -> Real
+					_ -> Absurd
 
 
-solveDeg1 :: IntMap Float -> Float
-solveDeg1 mmap	| fromList [(0, c), (1, b), (2, 0)] <- mmap = (-c) / b
-        	| fromList [(0, c), (1, b)] <- mmap = (-c) / b
+solveDeg1 :: M.IntMap Float -> Float
+solveDeg1 mmap = let	b = mmap M.! 1
+			c = mmap M.! 0
+		   in (-c) / b
 
 
-roots :: IntMap Float -> Roots
+roots :: M.IntMap Float -> Roots
 roots mmap
 	| delta < 0 = (cr1, cr2)
 	| delta == 0 = (rr0, rr0)
 	| delta > 0 = (rr1, rr2)
 	where
 	 (a, b, c) = getABC mmap
-	 delta = discriminantQuadratic (a, b, c)
+	 delta = discriminantQuadratic mmap
 	 cr1 = (-b / (2 * a)) :+ (sqrt(-delta) / (2 * a))
 	 cr2 = (-b / (2 * a)) :+ (-sqrt(-delta) / (2 * a))
 	 rr1 = ((-b - sqrt(delta)) / (2 * a)) :+ 0
@@ -212,10 +218,10 @@ handleNegativePowers p = case (findNeg p) of	Nothing -> get >>= (\s -> state (\_
     applyRcp (_ :*^: np) pl = fmap (*^* 1.0 :*^: (-np)) pl
 
     badRoots :: Monomial -> [ComplexF]
-    badRoots (c :*^: p) | (-p) == 0 = bundle $ roots (0, 0, c)
-    			| (-p) == 1 = bundle $ roots (0, c, 0)
-			| (-p) == 2 = bundle $ roots (c, 0, 0)
-			| otherwise = error "Monomial of a higher degree that 2 !"
+    badRoots (c :*^: p) | (-p) == 0 = bundle $ roots $ toMap [zero, zeroP 1, (c :*^: 2)]
+    			| (-p) == 1 = bundle $ roots $ toMap [zero, (c :*^: 1), zeroP 2]
+			| (-p) == 2 = bundle $ roots $ toMap [(c :*^: 0), zeroP 1, zeroP 2]
+			| otherwise = error "Monomial of a higher degree that 2 ."
 
     findNeg = find (\(_ :*^: p) -> p < 0)
 

@@ -2,7 +2,8 @@
 import System.Environment (getArgs)
 import System.IO (hPutStrLn, stderr)
 
-import qualified Data.DList as D
+import Data.DList (toList)
+import Control.Monad (join)
 import Control.Monad.Writer (execWriter)
 
 import Data.MyPolynomial.Parser (readEquation)
@@ -21,8 +22,6 @@ main :: IO ()
 main = do
 	let error _ = hPutStrLn stderr "Usage: ./mySolver <quadratic equation>"
 	    proceed a = do
-	    	let	f = (\a b -> a ++ b)
-			wrout = execWriter (verboseSolve $ readEquation a)
-			output = D.foldr f "" wrout
-	    	  in putStrLn output
+	    	let	wrout = execWriter (verboseSolve $ readEquation a)
+	    	  in	putStrLn $ (toList . join) wrout
 	  in processArgs >>= either error proceed
