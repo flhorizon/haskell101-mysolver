@@ -93,6 +93,30 @@ discriminantQuadratic :: M.IntMap Float -> Float
 discriminantQuadratic fromList [(0, c), (1, b), (2, a)] = (b ^ 2.0 - 4.0 * a * c)
 discriminantQuadratic _ = sqrt (-1)
 
+data BroadSol = Absurd | Real
+data Solution = Quadratic Roots | Simple Float | Broad BroadSol
+
+solveEquation :: Equation -> Solution
+solveEquation map | (M.fromList [(0, c), (1, b), (2, a)]) <- map	= caseQ a b c
+		  | (M.fromList [(0, c), (1, b)]) <- map		= caseS bc
+		  | (M.singleton (0, c)) <- map				= broad
+  where
+    quadratic = Quadratic ( roots map )
+    simple = Simple ( solveDeg1 map )
+    broad = Broad broadSolve
+    caseQ a b c	| a /= 0 = quadratic
+		| a == 0 && b /= 0 = simple
+		| a == 0 && b == 0 = broad
+    caseS b c	| b /= 0 = simple  
+    		| b == 0 = broad
+
+
+
+
+solveDeg1 :: IntMap Float -> Float
+solveDeg1 mmap	| fromList [(0, c), (1, b), (2, 0)] <- mmap = (-c) / b
+        	| fromList [(0, c), (1, b)] <- mmap = (-c) / b
+
 
 roots :: IntMap Float -> Roots
 roots mmap
