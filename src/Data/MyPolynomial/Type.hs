@@ -27,8 +27,11 @@ infixl 6 *^
 c *^ p	| p >= 0 = c :*^: p
 	| otherwise = error "Constructing a monomial with a negative power."
 
+zeroP :: Int -> Monomial
+zeroP pw = 0 :*^: pw
+
 zero :: Monomial
-zero = 0 :*^: 0
+zero = zeroP 0
 
 instance Ord Monomial where
   m1@(c1 :*^: p1) `compare` m2@(c2 :*^: p2)

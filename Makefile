@@ -34,7 +34,7 @@ all: $(OBJD) $(BIN)
 
 
 $(BIN): $(SRC)
-	ghc --make -o $(BIN) -O -odir$(OBJD) -hidir$(IFACED) -i$(IMPORT_LIST) $^
+	ghc --make -o $(BIN) -O2 -odir$(OBJD) -hidir$(IFACED) -i$(IMPORT_LIST) $^
 
 
 $(OBJD):

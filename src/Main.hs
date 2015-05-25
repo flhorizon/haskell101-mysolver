@@ -23,6 +23,6 @@ main = do
 	    proceed a = do
 	    	let	f = (\a b -> a ++ b)
 			wrout = execWriter (verboseSolve $ readEquation a)
-			output = (D.foldr f "") wrout
+			output = D.foldr f "" wrout
 	    	  in putStrLn output
 	  in processArgs >>= either error proceed

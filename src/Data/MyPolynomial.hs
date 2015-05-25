@@ -10,23 +10,25 @@ module Data.MyPolynomial (
 	, Roots
 	, mbrCoeff
 	, mbrPower
-	, isQuadratic
 	, discriminantQuadratic
 	, roots
-	, condense
+	, canonify
 	, degree
 	, handleNegativePowers
-	, getCoeffs
+	, getABC
+	, toMap
 	, absurd
 	, divergent
 	) where
 
 import Data.Complex (Complex((:+)))
 import Data.List
-import Control.Applicative ((<$>), (<*>))
+import qualified Data.IntMap.Lazy as M
+import Control.Monad.Reader
+import Control.Monad.State
+
 import Data.MyPolynomial.Type
 import Data.MyPolynomial.Parser
-import Control.Monad.State
 
 
 type ComplexF = Complex Float
@@ -34,12 +36,12 @@ type Roots = (ComplexF, ComplexF)
 type NonRoots = [ComplexF]
 
 -- Sums adjacent Monomials of equal power.
-polynomeSmash :: Polynomial -> Polynomial
-polynomeSmash [] = []
-polynomeSmash poly@(m1:[]) = poly
-polynomeSmash (m1:m2:mn)
-	| p1 == p2 = polynomeSmash (combiMbr:mn)
-	| otherwise = m1:polynomeSmash (m2:mn)
+squeeze' :: Polynomial -> Polynomial
+squeeze' [] = []
+squeeze' poly@(m1:[]) = poly
+squeeze' (m1:m2:mn)
+	| p1 == p2 = squeeze (combiMbr:mn)
+	| otherwise = m1:squeeze (m2:mn)
 	 where
 	  p1 = mbrPower m1
 	  p2 = mbrPower m2
@@ -47,33 +49,58 @@ polynomeSmash (m1:m2:mn)
 	  c2 = mbrCoeff m2
 	  combiMbr = (c1 + c2) :*^: p1
 
-getCoeffs :: Polynomial -> (Float, Float, Float)
-getCoeffs p	| [m0, m1, m2] <- p = (mbrCoeff m0, mbrCoeff m1, mbrCoeff m2)
-		| otherwise = error "Uncondensed or non-quadratic polynomial."
+
+ -- Sums every Monomial of equal power.
+squeeze :: Polynomial -> Polynomial
+squeeze poly = runReader (doSqueeze poly) (powers poly)
+	where
+		 -- Build an unique list of represented powers in @pl@
+		powers pl = nub $ fmap mbrPower pl
+
+		-- Every @mn@ in @pl@ whose power is equal to the provided @pw@.
+		samePower pw pl = partition (\m -> mbrPower m == pw) pl) 
+
+		-- For each the provided power @pw@, partition out bros of power p, sum them, add them back to the other partition.
+		foldPower pw pl = let	(bros, others) = samePower pw pl
+					brogogo = foldr (\macc (m:_) -> head $ macc +^+ m) (zeroP pw) bros
+					in (brogogo:others)
+
+		-- Pseudo type annotation : 
+		-- doSequeeze :: Polynomial -> Reader Env@[Power] Polynomial
+		doSqueeze pl = do
+			e:es <- ask
+			let pl' = foldPower e pl
+			  in case es of	[] -> return pl'
+					_ -> local (\ _:en -> en ) (doStuff pl')
+
+ -- Returns a, b, c coefficients as in the canonical expression aX^2 + bX + c
+ -- Returns triple NaN if matching fails.
+getABC :: M.IntMap Float -> (Float, Float, Float)
+getABC fromList [(0, c), (1, b), (2, a)] = (a, b, c)
+getABC _ = (sqrt (-1), sqrt (-1), sqrt (-1))
 
 
--- Tests members' power.
--- True if it can be written aX^2 + bX + c without cutting Monomials out.
-isQuadratic :: Polynomial -> Bool
-isQuadratic poly
-	| length ( poly ) == 0 = True
-	| pow >= 0 && pow <= 2 = True && isQuadratic ( tail poly ) 
-	| otherwise = False
-	 where
-	  pow = mbrPower ( head poly )
+ -- Takes a condensed quadratic list polynomial; calls error otherwise.
+toMap :: Polynomial -> M.IntMap Float
+toMap pl = mapIt $ sort $ squeeze pl
+	where
+	  mapIt [(c0 :*^: p0):(c1 :*^: p1):(c2 :*^: p2)] = M.fromList [(p0, c0), (p1, c1), (p2, c2)]
+	  mapIt _ = error "Uncondensed or non-quadratic list polynomial."
 
 
+ -- Expects a canonical quadratic representation; returns NaN otherwise.
+discriminantQuadratic :: M.IntMap Float -> Float
+discriminantQuadratic fromList [(0, c), (1, b), (2, a)] = (b ^ 2.0 - 4.0 * a * c)
+discriminantQuadratic _ = sqrt (-1)
 
-discriminantQuadratic :: (Num n) => (n, n, n) -> n
-discriminantQuadratic (a, b, c) = (b ^ 2 - 4 * a * c)
 
-
-roots :: (Float, Float, Float) -> Roots
-roots (a, b, c)
+roots :: IntMap Float -> Roots
+roots mmap
 	| delta < 0 = (cr1, cr2)
 	| delta == 0 = (rr0, rr0)
 	| delta > 0 = (rr1, rr2)
 	where
+	 (a, b, c) = getABC mmap
 	 delta = discriminantQuadratic (a, b, c)
 	 cr1 = (-b / (2 * a)) :+ (sqrt(-delta) / (2 * a))
 	 cr2 = (-b / (2 * a)) :+ (-sqrt(-delta) / (2 * a))
@@ -88,17 +115,40 @@ yankLeft (Eq (lp, rp)) = Eq (sort $ lp ++ (move rp), [zero])
     move ((c :*^: p):rpn) = ((-c) :*^: p):move(rpn)
 
 
-condense :: Equation -> Equation
-condense eq = let Eq (l, r) = yankLeft eq;
-		  l' = polynomeSmash l;
-		in Eq (l', r )
+canonify :: Equation -> Equation
+canonify (Eq (l,r)) = let l' = ((0 :*^: 0):(0 :*^: 1):(0 :*^: 2):l)
+			  Eq (l'', r') = yankLeft $ Eq (l', r)
+			  l''' = squeeze l''
+			 in Eq (l''', r')
 
-degree :: Polynomial -> Int
-degree pl = (`highest` pl) (mbrPower $ head pl)
-  where
-    highest h [] = h
-    highest h (m1:mp)	| [] <- mp = mbrPower m1
-    			| _ :*^: p <- m1 = highest (max h p) mp
+
+degree :: M.IntMap Float -> Int
+degree mmap = withStartingKey 0
+	where
+	  withStartingKey k = highest k
+	  highest k = case M.lookupGE k mmap of { Nothing -> smallest k; Just (k, _) -> k; }
+	  smallest k = case M.lookupLE k mmap of { Nothing -> 0; Just (k, _) -> withStartingKey k; }
+
+
+cutHighZeroes :: Equation -> Equation
+cutHighZeroes (Eq (l, r)) = Eq (skim l, skim r)
+	where skim = filter (\(c :*^: p) -> c /= 0 || (c == 0 && p == 0))
+
+
+absurd :: Equation -> Bool
+absurd eq	| Eq ([cl :*^: 0], [cr :*^: 0]) <- eq'  = cl /= cr
+		| otherwise = False
+	where
+	  Eq (l, r) = yankLeft eq
+	  eq' = cutHighZeroes $ Eq (squeeze l, squeeze r)
+
+
+divergent :: Equation -> Bool
+divergent eq	| Eq ([cl :*^: 0], [cr :*^: 0]) <- eq'  = cl == cr
+		| otherwise = False
+	where
+	  Eq (l, r) = yankLeft eq
+	  eq' = cutHighZeroes $ Eq (squeeze l, squeeze r)
 
 
 -- Monomial multiplication
@@ -121,7 +171,7 @@ infix 4 -^-
 m1 -^- (c2 :*^: p2) = m1 +^+ ((-c2) :*^: p2)
 
 
--- Remove negative power monomes and adds forbidden roots to the State.
+-- Transforms negative power monomes away and adds forbidden roots to the State.
 handleNegativePowers :: Polynomial -> State NonRoots Polynomial 
 handleNegativePowers p = case (findNeg p) of	Nothing -> get >>= (\s -> state (\_ -> (p, s)))
 						Just mn -> handleNext mn p
@@ -135,7 +185,7 @@ handleNegativePowers p = case (findNeg p) of	Nothing -> get >>= (\s -> state (\_
 	handleNegativePowers ( applyRcp mx (delete mx pl) )
 
     applyRcp :: Monomial -> Polynomial -> Polynomial
-    applyRcp (_ :*^: np) pl = (*^* 1.0 :*^: (-np)) <$> pl
+    applyRcp (_ :*^: np) pl = fmap (*^* 1.0 :*^: (-np)) pl
 
     badRoots :: Monomial -> [ComplexF]
     badRoots (c :*^: p) | (-p) == 0 = bundle $ roots (0, 0, c)
@@ -146,11 +196,3 @@ handleNegativePowers p = case (findNeg p) of	Nothing -> get >>= (\s -> state (\_
     findNeg = find (\(_ :*^: p) -> p < 0)
 
 
- -- Working on a condensed Equation.
-absurd :: Equation -> Bool
-absurd eq	| (Eq ([c1 :*^: 0], [c2 :*^: 0])) <- eq = c1 /= c2
-		| otherwise = False
-
- -- Working on a condensed Equation.
-divergent :: Equation -> Bool
-divergent (Eq (l, r)) = l == r

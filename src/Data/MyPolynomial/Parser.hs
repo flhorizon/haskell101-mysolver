@@ -144,3 +144,10 @@ readEquation :: String -> Equation
 readEquation s = let parsed = filter (\(_, r) -> null r) $ readsEquation s
 		    in case parsed of	[] -> error "Failed to parse the equation."
 					_ -> fst . last $ parsed
+
+instance Read Equation where
+  readsPrec _ str = readsEquation str
+
+instance Read Monomial where
+  readsPrec _ str = readsMonomial str
+  readList str = readsPolynomial str
