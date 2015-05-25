@@ -3,7 +3,7 @@ module Data.MyPolynomial.Print
 	where
 
 import Data.MyPolynomial.Type
-import Data.Complex
+import Data.Complex (realPart, imagPart, Complex)
 
 ---------------------------------------------------------------------------
 ----  Polynomial / Monomial pretty print
@@ -59,3 +59,6 @@ prettyComplexS c = shows a . img
 	  | b == 0 = showString ""
 	  where
 	   b = imagPart c
+
+prettyComplex :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> String
+prettyComplex c = prettyComplexS c ""

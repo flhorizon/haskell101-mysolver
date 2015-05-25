@@ -8,7 +8,8 @@ SRC_ = Data/MyPolynomial.hs \
        Data/MyPolynomial/Print.hs \
        Data/MyPolynomial/Parser.hs \
        Data/MyPolynomial/Type.hs \
-       Main.hs 
+       Main.hs \
+       Solve.hs
 
 SRC = $(addprefix $(SRCD)/, $(SRC_))
 SRCSUBD = $(addprefix $(SRCD)/, $(SUBDIRS))

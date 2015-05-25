@@ -2,7 +2,7 @@
 module Data.MyPolynomial.Type
 	where
 
-
+infixl 6 :*^:
 data Monomial = Float :*^: Int
   deriving (Eq)
 
@@ -22,10 +22,13 @@ mbrPower :: Monomial -> Int
 mbrPower ( _ :*^: p ) = p
 
  -- Smart constructor enforcing power sign constraint.
+infixl 6 *^
 (*^) :: Float -> Int -> Monomial
 c *^ p	| p >= 0 = c :*^: p
 	| otherwise = error "Constructing a monomial with a negative power."
 
+zero :: Monomial
+zero = 0 :*^: 0
 
 instance Ord Monomial where
   m1@(c1 :*^: p1) `compare` m2@(c2 :*^: p2)
