@@ -3,11 +3,9 @@ import System.Environment (getArgs)
 import System.IO (hPutStrLn, stderr)
 
 import qualified Data.DList as D
-import Control.Monad.Writer
+import Control.Monad.Writer (execWriter)
 
-import Data.MyPolynomial
-import Data.MyPolynomial.Parser
-import Data.MyPolynomial.Print
+import Data.MyPolynomial.Parser (readEquation)
 
 import Solve
 

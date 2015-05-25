@@ -12,7 +12,7 @@ import Data.MyPolynomial
 import Data.MyPolynomial.Print
 
 
-data Solvability = Absurd | Divergent | Degree | Clear deriving Eq
+data Solvability = Absurd | Divergent | Degree | Clear
 
 
 discriminantSpeech :: Float -> Writer (D.DList String) ()
