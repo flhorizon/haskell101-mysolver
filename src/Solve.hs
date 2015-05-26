@@ -6,14 +6,19 @@ module Solve (
 import Control.Applicative ((<*>))
 import qualified Data.DList as D
 import qualified Data.IntMap.Lazy as M
-import Data.Complex (realPart)
+import Data.Complex (realPart, Complex((:+)))
 import Control.Monad.Writer
+import Control.Monad.State
 
 import Data.MyPolynomial
 import Data.MyPolynomial.Print
 
+type ComplexF = Complex Float
 type ShowD = D.DList Char
 data Solvability b = IsBroad b | Degree | Clear
+
+
+
 
 
 sToShowD :: String -> D.DList ShowD
@@ -21,6 +26,9 @@ sToShowD s = (D.singleton . D.fromList) s
 
 toShowD :: [String] -> D.DList ShowD
 toShowD ls = ( D.fromList . ( fmap D.fromList ) ) ls
+
+
+
 
 
 discriminantSpeech :: Float -> Writer (D.DList ShowD) ()
@@ -39,28 +47,64 @@ unrootableSpeech Degree = tell $ sToShowD "The polynomial degree is strictly gre
 unrootableSpeech _ = return ()
 
 
+
+
 degSolvability :: Int -> Solvability b
 degSolvability d | d >= 0 && d <= 2	= Clear
 		 | otherwise		= Degree
 
-tellRoots :: Float -> Roots -> Writer (D.DList ShowD) ()
-tellRoots delta (c1, c2)
-	| delta == 0 = tell $ sToShowD ( prettyComplex c1 )
-	| otherwise = tell $ toShowD [prettyComplex c1, "\n", prettyComplex c2]
+
+ -- Tells solution/root(s) with mention of exclusion.
+tellSolutions :: Maybe Float -> Roots -> [ComplexF] -> Writer (D.DList ShowD) ()
+tellSolutions delta (c1, c2) badRoots
+	| delta == Just 0 = tell $ toShowD $ tellBad [c1] badRoots "root" []
+	| Nothing <- delta = tell $ toShowD $ tellBad [c1] badRoots "solution" []
+	| otherwise = tell $ toShowD $ tellBad [c1, c2] badRoots "root" []
+  where
+    tellBad (rt:rts) bad w =
+    	case rt `elem` bad of	True -> ([prettyComplex rt, " (excluded " ++ w ++ ")"] ++) . next
+    				_ -> ([prettyComplex rt] ++) . next
+    	  where
+    	    next = case rts of	(r:_) -> (["\n"] ++) . tellBad rts bad  w
+    	    			[] -> ([] ++)
+
+
 
 tellReduced :: M.IntMap Float -> Writer (D.DList ShowD) ()
 tellReduced map = tell $ toShowD ["Reduced form: ", prettyPolynomialM map, " = 0\n"]
+
+
+
+
+tellForbidden :: [ComplexF] -> Writer (D.DList ShowD) ()
+tellForbidden [] = return ()
+tellForbidden frts = tell $ toShowD $ ["Excluded roots/solutions:\n"] ++ (showForbidden frts [])
+  where
+    showForbidden [] = ([] ++)
+    showForbidden (fr:fs) = ([prettyComplex fr, "\n"]++) . showForbidden fs
+
+
+
+
+
+
+
+
+
 
 verboseSolve :: Equation -> Writer (D.DList ShowD) (Equation, Maybe Solution) 
 verboseSolve eq = do
 	tellReduced mapPol
 	tell $ toShowD ["Polynomial degree: ", show deg, "\n"]
+	tellForbidden badRoots
 	case degSolvability deg of	Clear -> doSolve
 					Degree -> quit Degree
   where
-    ceq = canonify eq
-    mapPol = (toMap . getL) ceq
-    deg = degree mapPol
+    Eq (cl, cr) = canonify eq
+    (straightP, badRoots) = runState ( handleNegativePowers cl ) []
+    ceq = Eq (straightP, cr)	-- canonified equation with negative powers lifted
+    mapPol = toMap straightP	-- left polynomial as an IntMap
+    deg = degree mapPol		-- left polynomial degree
 
     -- doSolve :: Writer (D.DList ShowD) (Equation, Maybe Solution)
     doSolve = do
@@ -80,10 +124,11 @@ verboseSolve eq = do
     result sol@(Quadratic rts) = do
 	let delta = discriminantQuadratic mapPol
 	discriminantSpeech delta
-	tellRoots delta rts
+	tellSolutions (Just delta) rts badRoots
 	return ( ceq, Just sol )
     result sol@(Simple fl) = do
-	tell $ toShowD [ "The solution is:\n", show fl ]
+	tell $ toShowD [ "The solution is:\n" ]
+	tellSolutions Nothing (fl :+ 0, 0 :+ 0) badRoots
 	return ( ceq, Just sol )
 
 

@@ -7,6 +7,52 @@ import Data.Complex (realPart, imagPart, Complex)
 import Data.List (sort)
 import Data.IntMap.Lazy
 
+ -- `procelain' functions are intended for canonical printing :
+ -- i.e. Show instances, i.e. serialization, i.e. Read reciprocal
+ 
+ -- `pretty' functions are intended for pretty printing only :
+ -- i.e. absolutly no consistent Read <=> Show reciprocity.
+ 
+ -- `prints' functions are general purpose printing functions;
+ -- they either use `pretty' or `porcelain' to generate output.
+ -- The 3rd person-like terminal 's' is a general Haskell convention
+ -- for functions using a provided interface to do a specific job.
+ 
+ -- S suffixed functions return a String difference list (ShowS)
+ -- for efficient arbitrary concatenation.
+
+---------------------------------------------------------------------------
+----  Canonical printing ( Read <=> Show )
+---------------------------------------------------------------------------
+
+porcelainMonomialS :: Monomial -> ShowS
+porcelainMonomialS (c :*^: p) = shows c . showString " * x^" . shows p
+
+porcelainPolynomialS :: Polynomial -> ShowS
+porcelainPolynomialS = printsPolynomialS porcelainMonomialS
+
+porcelainEquationS :: Equation -> ShowS
+porcelainEquationS = printsEquationS porcelainPolynomialS
+
+printsPolynomialS :: (Monomial -> ShowS) -> Polynomial -> ShowS
+printsPolynomialS _ []  = ('0':)
+printsPolynomialS pfS (mn:[]) = pfS mn
+printsPolynomialS pfS (m1:(m2@(c2 :*^: p2)):ms) = pfS m1 . signBridge . next
+ where
+  signBridge
+   | c2 < 0 = (" - " ++)
+   | otherwise = (" + " ++)
+  next
+   | c2 < 0 = printsPolynomialS pfS (((-c2) :*^: p2):ms)
+   | otherwise = printsPolynomialS pfS (m2:ms)
+   
+printsEquationS :: (Polynomial -> ShowS) -> Equation -> ShowS
+printsEquationS pfS (Eq (l, r)) = memb l . showString " = " . memb r
+ where
+  memb [] = ('0':)
+  memb p  = pfS p
+
+
 ---------------------------------------------------------------------------
 ----  Polynomial / Monomial pretty print
 ---------------------------------------------------------------------------
@@ -14,27 +60,17 @@ import Data.IntMap.Lazy
 prettyMonomialS :: Monomial -> ShowS
 prettyMonomialS (0 :*^: _) = showString ""
 prettyMonomialS (c :*^: 0) = shows c
-prettyMonomialS (c :*^: 1) = shows c . showString " * x"
+prettyMonomialS (c :*^: 1) = shows c . showString " x"
 prettyMonomialS (c :*^: p) = prettyMonomialS (c :*^: 1) . ('^':) . shows p
 
+prettyMonomial :: Monomial -> String
+prettyMonomial mn =  prettyMonomialS mn ""
 
 prettyPolynomialS :: Polynomial -> ShowS
-prettyPolynomialS []  = ('0':)
-prettyPolynomialS (mn:[]) = prettyMonomialS mn
-prettyPolynomialS (m1:(m2@(c2 :*^: p2)):ms) = prettyMonomialS m1 . signBridge . next
- where
-  signBridge
-   | c2 < 0 = (" - " ++)
-   | otherwise = (" + " ++)
-  next
-   | c2 < 0 = prettyPolynomialS (((-c2) :*^: p2):ms)
-   | otherwise = prettyPolynomialS (m2:ms)
-
-prettyMonomial :: Monomial -> String
-prettyMonomial m = prettyMonomialS m []
+prettyPolynomialS p = printsPolynomialS prettyMonomialS p
 
 prettyPolynomial :: Polynomial -> String
-prettyPolynomial p = prettyPolynomialS p []
+prettyPolynomial p = prettyPolynomialS p ""
 
 prettyPolynomialM :: IntMap Float -> String
 prettyPolynomialM mmap = ( prettyPolynomial . sort ) $ consUp (smallest 0 mmap) mmap []
@@ -49,10 +85,7 @@ prettyPolynomialM mmap = ( prettyPolynomial . sort ) $ consUp (smallest 0 mmap) 
 ---------------------------------------------------------------------------
 
 prettyEquationS :: Equation -> ShowS
-prettyEquationS (Eq (pl, pr)) = memb pl . showString " = " . memb pr
- where
-  memb [] = ('0':)
-  memb p  = prettyPolynomialS p
+prettyEquationS = printsEquationS (printsPolynomialS porcelainMonomialS)
 
 prettyEquation :: Equation -> String
 prettyEquation eq = prettyEquationS eq []
@@ -75,4 +108,11 @@ prettyComplexS c = shows a . img
 
 prettyComplex :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> String
 prettyComplex c = prettyComplexS c ""
+
+instance Show Monomial where
+  showsPrec _ = porcelainMonomialS
+  showList = porcelainPolynomialS
+
+instance Show Equation where
+  showsPrec _ = porcelainEquationS
 

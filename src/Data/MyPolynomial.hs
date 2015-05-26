@@ -32,6 +32,7 @@ import Control.Monad.State
 
 import Data.MyPolynomial.Type
 import Data.MyPolynomial.Parser
+import Data.MyPolynomial.Print
 
 
 type ComplexF = Complex Float
@@ -132,7 +133,7 @@ roots mmap
 	 rr0 = rr1
 
 yankLeft :: Equation -> Equation
-yankLeft (Eq (lp, rp)) = Eq (sort $ lp ++ (move rp), [zero])
+yankLeft (Eq (lp, rp)) = Eq (lp ++ (move rp), [zero])
   where
     move [] = []
     move ((c :*^: p):rpn) = ((-c) :*^: p):move(rpn)
@@ -143,6 +144,10 @@ canonify (Eq (l,r)) = let l' = zero : zeroP 1 : zeroP 2 : l
 			  Eq (l'', r') = yankLeft $ Eq (l', r)
 			  l''' = squeeze l''
 			 in Eq (l''', r')
+
+canonifyP :: Polynomial -> Polynomial
+canonifyP pl = let pl' = zero : zeroP 1 : zeroP 2 : pl
+		 in squeeze pl'
 
 
 degree :: M.IntMap Float -> Int
@@ -206,17 +211,17 @@ handleNegativePowers p = case (findNeg p) of	Nothing -> get >>= (\s -> state (\_
     handleNext :: Monomial -> Polynomial -> State NonRoots Polynomial
     handleNext mx pl = do
     	get >>= (\s -> put $ addForbidden s (badRoots mx))
-	handleNegativePowers ( applyRcp mx (delete mx pl) )
+	handleNegativePowers ( applyRcp mx pl )
 
     applyRcp :: Monomial -> Polynomial -> Polynomial
-    applyRcp (_ :*^: np) pl = fmap (*^* 1.0 :*^: (-np)) pl
+    applyRcp negmn pl = canonifyP $ fmap (/^/ negmn) pl
 
     badRoots :: Monomial -> [ComplexF]
-    badRoots (c :*^: p) | (-p) == 0 = bundle $ roots $ toMap [zero, zeroP 1, (c :*^: 2)]
-    			| (-p) == 1 = bundle $ roots $ toMap [zero, (c :*^: 1), zeroP 2]
-			| (-p) == 2 = bundle $ roots $ toMap [(c :*^: 0), zeroP 1, zeroP 2]
-			| otherwise = error "Monomial of a higher degree that 2 ."
+    badRoots (_ :*^: 0) = [] -- Should not happen.
+    badRoots (c :*^: p)	| (-p) == 1 = ((:[]) . (:+ 0) . solveDeg1) $ toMap [zero, (c :*^: 1), zeroP 2]
+			| (-p) == 2 = bundle $ roots $ toMap [(c :*^: 2), zeroP 1, zeroP 0]
+			| otherwise = error $ "Will not solve: monomial of a higher absolute degree that 2:\n" ++ prettyMonomial (c :*^: p)
 
-    findNeg = find (\(_ :*^: p) -> p < 0)
+    findNeg = find (\(c :*^: p) -> p < 0 && c /= 0)
 
 
