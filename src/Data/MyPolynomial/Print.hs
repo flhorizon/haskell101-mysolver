@@ -34,6 +34,9 @@ porcelainPolynomialS = printsPolynomialS porcelainMonomialS
 porcelainEquationS :: Equation -> ShowS
 porcelainEquationS = printsEquationS porcelainPolynomialS
 
+porcelainPolynomialSM :: IntMap Float -> ShowS
+porcelainPolynomialSM = printsPolynomialSM porcelainPolynomialS
+
 printsPolynomialS :: (Monomial -> ShowS) -> Polynomial -> ShowS
 printsPolynomialS _ []  = ('0':)
 printsPolynomialS pfS (mn:[]) = pfS mn
@@ -45,6 +48,15 @@ printsPolynomialS pfS (m1:(m2@(c2 :*^: p2)):ms) = pfS m1 . signBridge . next
   next
    | c2 < 0 = printsPolynomialS pfS (((-c2) :*^: p2):ms)
    | otherwise = printsPolynomialS pfS (m2:ms)
+   
+   
+printsPolynomialSM :: (Polynomial -> ShowS) -> IntMap Float -> ShowS
+printsPolynomialSM pfS mmap = ( pfS . sort ) $ consUp (smallest 0 mmap) mmap ([]++) []
+  where
+    smallest k map = case lookupLT k map of { Nothing -> k;	Just (k, _) -> smallest k map; }
+    consUp k map dl = case lookupGE k map of	Nothing -> dl
+    						Just (kn, 0) -> consUp (kn + 1) map dl
+						Just (kn, v) -> consUp (kn + 1) map (((v :*^: kn):) . dl)
    
 printsEquationS :: (Polynomial -> ShowS) -> Equation -> ShowS
 printsEquationS pfS (Eq (l, r)) = memb l . showString " = " . memb r
@@ -72,13 +84,11 @@ prettyPolynomialS p = printsPolynomialS prettyMonomialS p
 prettyPolynomial :: Polynomial -> String
 prettyPolynomial p = prettyPolynomialS p ""
 
+prettyPolynomialSM :: IntMap Float -> ShowS
+prettyPolynomialSM = printsPolynomialSM prettyPolynomialS
+
 prettyPolynomialM :: IntMap Float -> String
-prettyPolynomialM mmap = ( prettyPolynomial . sort ) $ consUp (smallest 0 mmap) mmap []
-  where
-    smallest k map = case lookupLT k map of { Nothing -> k;	Just (k, _) -> smallest k map; }
-    consUp k map ls = case lookupGE k map of	Nothing -> ls
-    						Just (kn, 0) -> consUp (kn + 1) map ls
-						Just (kn, v) -> consUp (kn + 1) map ((v :*^: kn):ls)
+prettyPolynomialM m = printsPolynomialSM prettyPolynomialS m []
 
 ---------------------------------------------------------------------------
 ----  Equation pretty print

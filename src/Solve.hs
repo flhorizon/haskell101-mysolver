@@ -3,7 +3,6 @@ module Solve (
 	verboseSolve
 	) where
 
-import Control.Applicative ((<*>))
 import qualified Data.DList as D
 import qualified Data.IntMap.Lazy as M
 import Data.Complex (realPart, Complex((:+)))
@@ -71,9 +70,10 @@ tellSolutions delta (c1, c2) badRoots
 
 
 tellReduced :: M.IntMap Float -> Writer (D.DList ShowD) ()
-tellReduced map = tell $ toShowD ["Reduced form: ", prettyPolynomialM map, " = 0\n"]
+tellReduced map = tell $ toShowD ["Reduced form: ", porcelainPolynomialSM map "", " = 0\n"]
 
-
+tellNatural :: M.IntMap Float -> Writer (D.DList ShowD) ()
+tellNatural map = tell $ toShowD ["Natural reduced form: ", prettyPolynomialM map, " = 0\n"]
 
 
 tellForbidden :: [ComplexF] -> Writer (D.DList ShowD) ()
@@ -87,14 +87,10 @@ tellForbidden frts = tell $ toShowD $ ["Excluded roots/solutions:\n"] ++ (showFo
 
 
 
-
-
-
-
-
 verboseSolve :: Equation -> Writer (D.DList ShowD) (Equation, Maybe Solution) 
 verboseSolve eq = do
 	tellReduced mapPol
+	tellNatural mapPol
 	tell $ toShowD ["Polynomial degree: ", show deg, "\n"]
 	tellForbidden badRoots
 	case degSolvability deg of	Clear -> doSolve
