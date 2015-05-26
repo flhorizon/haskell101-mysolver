@@ -20,22 +20,13 @@ import Data.IntMap.Lazy
  
  -- S suffixed functions return a String difference list (ShowS)
  -- for efficient arbitrary concatenation.
+ 
+ -- M suffixed functions take a polynomial represented by
+ -- an IntMap Float instance.
 
 ---------------------------------------------------------------------------
-----  Canonical printing ( Read <=> Show )
+----  Abstract printers
 ---------------------------------------------------------------------------
-
-porcelainMonomialS :: Monomial -> ShowS
-porcelainMonomialS (c :*^: p) = shows c . showString " * x^" . shows p
-
-porcelainPolynomialS :: Polynomial -> ShowS
-porcelainPolynomialS = printsPolynomialS porcelainMonomialS
-
-porcelainEquationS :: Equation -> ShowS
-porcelainEquationS = printsEquationS porcelainPolynomialS
-
-porcelainPolynomialSM :: IntMap Float -> ShowS
-porcelainPolynomialSM = printsPolynomialSM porcelainPolynomialS
 
 printsPolynomialS :: (Monomial -> ShowS) -> Polynomial -> ShowS
 printsPolynomialS _ []  = ('0':)
@@ -63,10 +54,29 @@ printsEquationS pfS (Eq (l, r)) = memb l . showString " = " . memb r
  where
   memb [] = ('0':)
   memb p  = pfS p
+  
+  
+
+---------------------------------------------------------------------------
+----  Canonical printing ( Read <=> Show )
+---------------------------------------------------------------------------
+
+porcelainMonomialS :: Monomial -> ShowS
+porcelainMonomialS (c :*^: p) = shows c . showString " * x^" . shows p
+
+porcelainPolynomialS :: Polynomial -> ShowS
+porcelainPolynomialS = printsPolynomialS porcelainMonomialS
+
+porcelainEquationS :: Equation -> ShowS
+porcelainEquationS = printsEquationS porcelainPolynomialS
+
+porcelainPolynomialSM :: IntMap Float -> ShowS
+porcelainPolynomialSM = printsPolynomialSM porcelainPolynomialS
+
 
 
 ---------------------------------------------------------------------------
-----  Polynomial / Monomial pretty print
+----  Pretty printing
 ---------------------------------------------------------------------------
 
 prettyMonomialS :: Monomial -> ShowS
@@ -78,11 +88,15 @@ prettyMonomialS (c :*^: p) = prettyMonomialS (c :*^: 1) . ('^':) . shows p
 prettyMonomial :: Monomial -> String
 prettyMonomial mn =  prettyMonomialS mn ""
 
+
+
 prettyPolynomialS :: Polynomial -> ShowS
 prettyPolynomialS p = printsPolynomialS prettyMonomialS p
 
 prettyPolynomial :: Polynomial -> String
 prettyPolynomial p = prettyPolynomialS p ""
+
+
 
 prettyPolynomialSM :: IntMap Float -> ShowS
 prettyPolynomialSM = printsPolynomialSM prettyPolynomialS
@@ -90,9 +104,8 @@ prettyPolynomialSM = printsPolynomialSM prettyPolynomialS
 prettyPolynomialM :: IntMap Float -> String
 prettyPolynomialM m = printsPolynomialSM prettyPolynomialS m []
 
----------------------------------------------------------------------------
-----  Equation pretty print
----------------------------------------------------------------------------
+
+
 
 prettyEquationS :: Equation -> ShowS
 prettyEquationS = printsEquationS (printsPolynomialS porcelainMonomialS)
@@ -101,9 +114,7 @@ prettyEquation :: Equation -> String
 prettyEquation eq = prettyEquationS eq []
 
 
----------------------------------------------------------------------------
-----  Complex number pretty print
----------------------------------------------------------------------------
+
 
 prettyComplexS :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> ShowS
 prettyComplexS c = shows a . img
@@ -118,6 +129,12 @@ prettyComplexS c = shows a . img
 
 prettyComplex :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> String
 prettyComplex c = prettyComplexS c ""
+
+
+---------------------------------------------------------------------------
+----  Show instances
+---------------------------------------------------------------------------
+
 
 instance Show Monomial where
   showsPrec _ = porcelainMonomialS
