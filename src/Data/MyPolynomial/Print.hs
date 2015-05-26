@@ -12,10 +12,14 @@ import Data.IntMap.Lazy
 ---------------------------------------------------------------------------
 
 prettyMonomialS :: Monomial -> ShowS
-prettyMonomialS (c :*^: p) = shows c . (" * X^" ++) . shows p
+prettyMonomialS (0 :*^: _) = showString ""
+prettyMonomialS (c :*^: 0) = shows c
+prettyMonomialS (c :*^: 1) = shows c . showString " * x"
+prettyMonomialS (c :*^: p) = prettyMonomialS (c :*^: 1) . ('^':) . shows p
+
 
 prettyPolynomialS :: Polynomial -> ShowS
-prettyPolynomialS []  = ("0" ++)
+prettyPolynomialS []  = ('0':)
 prettyPolynomialS (mn:[]) = prettyMonomialS mn
 prettyPolynomialS (m1:(m2@(c2 :*^: p2)):ms) = prettyMonomialS m1 . signBridge . next
  where
@@ -37,8 +41,8 @@ prettyPolynomialM mmap = ( prettyPolynomial . sort ) $ consUp (smallest 0 mmap) 
   where
     smallest k map = case lookupLT k map of { Nothing -> k;	Just (k, _) -> smallest k map; }
     consUp k map ls = case lookupGE k map of	Nothing -> ls
-    						Just (kn, 0) -> consUp kn ( delete kn map ) ls
-						Just (kn, v) -> consUp kn ( delete kn map ) ((v :*^: kn):ls)
+    						Just (kn, 0) -> consUp (kn + 1) map ls
+						Just (kn, v) -> consUp (kn + 1) map ((v :*^: kn):ls)
 
 ---------------------------------------------------------------------------
 ----  Equation pretty print
