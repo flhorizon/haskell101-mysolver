@@ -105,7 +105,7 @@ parsePnml  = do
 		optional $ char '+'
 		skipSpaces
 		parsePnml >>= ( \dl -> return ( hp `D.cons` dl ) )
-	  in next <++ ( parseMnl >>= ( \hp -> return hp >>= sToDL ) )
+	  in next +++ ( parseMnl >>= ( \hp -> return hp >>= sToDL ) )
 
 
 parseEq :: ReadP Equation

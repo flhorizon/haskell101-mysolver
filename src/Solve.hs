@@ -5,6 +5,7 @@ module Solve (
 
 import Control.Applicative ((<*>))
 import qualified Data.DList as D
+import qualified Data.IntMap.Lazy as M
 import Data.Complex (realPart)
 import Control.Monad.Writer
 
@@ -47,11 +48,12 @@ tellRoots delta (c1, c2)
 	| delta == 0 = tell $ sToShowD ( prettyComplex c1 )
 	| otherwise = tell $ toShowD [prettyComplex c1, "\n", prettyComplex c2]
 
-
+tellReduced :: M.IntMap Float -> Writer (D.DList ShowD) ()
+tellReduced map = tell $ toShowD ["Reduced form: ", prettyPolynomialM map, " = 0\n"]
 
 verboseSolve :: Equation -> Writer (D.DList ShowD) (Equation, Maybe Solution) 
 verboseSolve eq = do
-    	tell $ toShowD ["Reduced form: ", (prettyEquation ceq), "\n"]
+	tellReduced mapPol
 	tell $ toShowD ["Polynomial degree: ", show deg, "\n"]
 	case degSolvability deg of	Clear -> doSolve
 					Degree -> quit Degree

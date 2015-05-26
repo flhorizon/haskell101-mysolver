@@ -10,7 +10,6 @@ import Data.MyPolynomial.Parser (readEquation)
 
 import Solve
 
-
 processArgs :: IO (Either () String)
 processArgs = do
 	args <- getArgs
@@ -20,8 +19,8 @@ processArgs = do
 
 main :: IO ()
 main = do
-	let error _ = hPutStrLn stderr "Usage: ./mySolver <quadratic equation>"
-	    proceed a = do
-	    	let	wrout = execWriter (verboseSolve $ readEquation a)
-	    	  in	putStrLn $ (toList . join) wrout
-	  in processArgs >>= either error proceed
+ 	let error _ = hPutStrLn stderr "Usage: ./mySolver <quadratic equation>"
+ 	    proceed a = do
+ 	    	let	wrout = execWriter (verboseSolve $ readEquation a)
+ 	    	  in	putStrLn $ (toList . join) wrout
+ 	  in processArgs >>= either error proceed

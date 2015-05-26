@@ -38,20 +38,6 @@ type ComplexF = Complex Float
 type Roots = (ComplexF, ComplexF)
 type NonRoots = [ComplexF]
 
--- Sums adjacent Monomials of equal power.
-squeeze' :: Polynomial -> Polynomial
-squeeze' [] = []
-squeeze' poly@(m1:[]) = poly
-squeeze' (m1:m2:mn)
-	| p1 == p2 = squeeze (combiMbr:mn)
-	| otherwise = m1:squeeze (m2:mn)
-	 where
-	  p1 = mbrPower m1
-	  p2 = mbrPower m2
-	  c1 = mbrCoeff m1
-	  c2 = mbrCoeff m2
-	  combiMbr = (c1 + c2) :*^: p1
-
 
  -- Sums every Monomial of equal power.
 squeeze :: Polynomial -> Polynomial
@@ -61,7 +47,7 @@ squeeze poly = runReader (doSqueeze poly) (powers poly)
 		powers pl = nub $ fmap mbrPower pl
 
 		-- Every @mn@ in @pl@ whose power is equal to the provided @pw@.
-		samePower pw pl = partition (\m -> mbrPower m == pw) pl 
+		samePower pw pl = partition (\ (_ :*^: mp) -> mp == pw) pl 
 
 		-- For each the provided power @pw@, partition out bros of power p, sum them, add them back to the other partition.
 		foldPower pw pl = let	(bros, others) = samePower pw pl
@@ -83,10 +69,17 @@ getABC mmap = (mmap M.! 2, mmap M.! 1, mmap M.! 0)
 
  -- Takes a condensed quadratic list polynomial; calls error otherwise.
 toMap :: Polynomial -> M.IntMap Float
-toMap pl = mapIt $ sort $ squeeze pl
+toMap pl = mapIt (squeeze pl) (M.singleton 0 0)
 	where
-	  mapIt [(c0 :*^: p0), (c1 :*^: p1), (c2 :*^: p2)] = M.fromList [(p0, c0), (p1, c1), (p2, c2)]
-	  mapIt _ = error "Uncondensed or non-quadratic list polynomial."
+	  mapIt ((c :*^: p):mn) map = mapIt mn (M.insert p c map)
+	  mapIt [] map = map
+
+ -- Calls error if the polynomial degree is out of bounds ([0 <-> 2]).
+assertMap :: M.IntMap Float -> ()
+assertMap mmap = let d = degree mmap
+		   in if d > 2 || d < 0
+		   	then	error "Uncondensed or non-quadratic list polynomial."
+		   	else	()
 
 
  -- Expects a canonical quadratic representation
@@ -146,18 +139,19 @@ yankLeft (Eq (lp, rp)) = Eq (sort $ lp ++ (move rp), [zero])
 
 
 canonify :: Equation -> Equation
-canonify (Eq (l,r)) = let l' = ((0 :*^: 0):(0 :*^: 1):(0 :*^: 2):l)
+canonify (Eq (l,r)) = let l' = zero : zeroP 1 : zeroP 2 : l
 			  Eq (l'', r') = yankLeft $ Eq (l', r)
 			  l''' = squeeze l''
 			 in Eq (l''', r')
 
 
 degree :: M.IntMap Float -> Int
-degree mmap = withStartingKey 0
+degree mmap = highest 0
 	where
-	  withStartingKey k = highest k
-	  highest k = case M.lookupGE k mmap of { Nothing -> smallest k; Just (k, _) -> k; }
-	  smallest k = case M.lookupLE k mmap of { Nothing -> 0; Just (k, _) -> withStartingKey k; }
+	  highest k = case M.lookupGT k mmap of { Nothing -> smaller k;	Just (kn, _) -> highest kn; }
+	  smaller k = case M.lookupLE k mmap of { Nothing -> k;		Just (kn, v) -> check kn v; }
+	  check kn v = if ( v == 0 && kn > 0 )	then	smaller (kn - 1)
+				   		else	kn
 
 
 cutHighZeroes :: Equation -> Equation

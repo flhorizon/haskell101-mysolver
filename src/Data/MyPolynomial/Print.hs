@@ -4,6 +4,8 @@ module Data.MyPolynomial.Print
 
 import Data.MyPolynomial.Type
 import Data.Complex (realPart, imagPart, Complex)
+import Data.List (sort)
+import Data.IntMap.Lazy
 
 ---------------------------------------------------------------------------
 ----  Polynomial / Monomial pretty print
@@ -13,7 +15,7 @@ prettyMonomialS :: Monomial -> ShowS
 prettyMonomialS (c :*^: p) = shows c . (" * X^" ++) . shows p
 
 prettyPolynomialS :: Polynomial -> ShowS
-prettyPolynomialS []  = ("{Empty set}" ++)
+prettyPolynomialS []  = ("0" ++)
 prettyPolynomialS (mn:[]) = prettyMonomialS mn
 prettyPolynomialS (m1:(m2@(c2 :*^: p2)):ms) = prettyMonomialS m1 . signBridge . next
  where
@@ -30,6 +32,13 @@ prettyMonomial m = prettyMonomialS m []
 prettyPolynomial :: Polynomial -> String
 prettyPolynomial p = prettyPolynomialS p []
 
+prettyPolynomialM :: IntMap Float -> String
+prettyPolynomialM mmap = ( prettyPolynomial . sort ) $ consUp (smallest 0 mmap) mmap []
+  where
+    smallest k map = case lookupLT k map of { Nothing -> k;	Just (k, _) -> smallest k map; }
+    consUp k map ls = case lookupGE k map of	Nothing -> ls
+    						Just (kn, 0) -> consUp kn ( delete kn map ) ls
+						Just (kn, v) -> consUp kn ( delete kn map ) ((v :*^: kn):ls)
 
 ---------------------------------------------------------------------------
 ----  Equation pretty print
@@ -62,3 +71,4 @@ prettyComplexS c = shows a . img
 
 prettyComplex :: (Ord c, Num c, Show c, RealFloat c) => Complex c -> String
 prettyComplex c = prettyComplexS c ""
+
