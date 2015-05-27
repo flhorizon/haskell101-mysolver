@@ -6,8 +6,8 @@ module Solve (
 import qualified Data.DList as D
 import qualified Data.IntMap.Lazy as M
 import Data.Complex (realPart, Complex((:+)))
-import Control.Monad.Writer
-import Control.Monad.State
+import Control.Monad.Trans.Writer
+import Control.Monad.Trans.State
 
 import Data.MyPolynomial
 import Data.MyPolynomial.Print
@@ -87,7 +87,7 @@ tellForbidden frts = tell $ toShowD $ ["Excluded roots/solutions:\n"] ++ (showFo
 
 
 
-verboseSolve :: Equation -> Writer (D.DList ShowD) (Equation, Maybe Solution) 
+verboseSolve :: Equation -> Writer (D.DList ShowD) (Equation, Maybe Solution)
 verboseSolve eq = do
 	tellReduced mapPol
 	tellNatural mapPol

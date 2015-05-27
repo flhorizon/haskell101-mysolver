@@ -4,7 +4,7 @@ import System.IO (hPutStrLn, stderr)
 
 import Data.DList (toList)
 import Control.Monad (join)
-import Control.Monad.Writer (execWriter)
+import Control.Monad.Trans.Writer (execWriter)
 
 import Data.MyPolynomial.Type
 

@@ -5,7 +5,7 @@ module Data.MyPolynomial.Print
 import Data.MyPolynomial.Type
 import Data.Complex (realPart, imagPart, Complex)
 import Data.List (sort)
-import Data.IntMap.Lazy
+import Data.IntMap.Lazy (lookupLT, lookupGE, IntMap)
 
  -- `procelain' functions are intended for canonical printing :
  -- i.e. Show instances, i.e. serialization, i.e. Read reciprocal

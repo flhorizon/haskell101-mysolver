@@ -27,8 +27,8 @@ module Data.MyPolynomial (
 import Data.Complex (Complex((:+)))
 import Data.List
 import qualified Data.IntMap.Lazy as M
-import Control.Monad.Reader
-import Control.Monad.State
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State
 
 import Data.MyPolynomial.Type
 import Data.MyPolynomial.Parser
