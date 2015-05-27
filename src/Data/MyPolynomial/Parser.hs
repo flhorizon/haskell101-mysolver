@@ -35,7 +35,7 @@ toL dl = return $ D.toList dl
  -- -- -- --
  -- -- -- --
  --
- --	Parsers.
+ --	Helper parsers.
  --
  --
 
@@ -60,62 +60,90 @@ floatLitteral = do
 		return $ D.concat [e, m, dgs]
 
 
+
+minusOrVoid :: ReadP ShowS
+minusOrVoid = do
+	c <- option '#' (char '-')
+	case c of	'-' -> return (c:)
+			_ -> return ("" ++)
+	
+		
+parseCoeff :: ReadP Float
+parseCoeff = do
+	skipSpaces			
+	lTok <- floatLitteral 
+	return ( read $ lTok :: Float )
+
+parsePower :: ReadP Int
+parsePower = do
+	skipSpaces >> char '^' >> skipSpaces	
+	mp <- minusOrVoid	
+	rTok <- skipSpaces >> many1 ( satisfy isDigit ) 
+	return ( read $ mp rTok :: Int )
+	
+parseEqParam :: ReadP ()
+parseEqParam = do
+	skipSpaces
+	satisfy (\c -> c == 'x')
+	return ()
+
+
+-- ( parseFloat ; option 0 ( *?; parseX) ; option 1 parsePower ))
+explicitCoeffPath :: ReadP Monomial
+explicitCoeffPath = do
+	cf <- parseCoeff
+	skipSpaces
+	pow <- option 0 ( optional ( char '*' >> skipSpaces )
+		>> parseEqParam >> option 1 parsePower )
+	return ( cf :*^: pow )
+	
+
+-- (!parseFloat; !*; parseX ; option 1 parserPower)
+implicitCoeffPath :: ReadP Monomial
+implicitCoeffPath = do
+	parseEqParam
+	skipSpaces
+	pow <- option 1 parsePower
+	return ( 1.0 :*^: pow )
+
+
+ -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+ -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+ -- -- -- --
+ -- --
+ --	Parsers.
+ --	
+ --
+ --
+	
+
  -- Parse monomial
-parseMnl :: ReadP Monomial
-parseMnl = do
-	skipSpaces
-	mc <- minusOrVoid
-	skipSpaces
-	lTok <- floatLitteral		-- Coefficient
-	pow <- option 0 consPower	-- implicit 0 power if missing the cons part.
-	return $ (read $ mc lTok :: Float) :*^: pow
-	  where
-	  -- -- -- --
-	  -- Helpers
-	  -- -- -- --
-	    consPower :: ReadP Int
-	    consPower = do
-		skipSpaces			-- -- -- -- -- --
-		char '*'			--
-		skipSpaces			--
-		satisfy (\c -> c `elem` "xX")	-- Monomial << Constructor >>
-		skipSpaces			--  * x ^
-		char '^'			--
-		skipSpaces			-- -- -- -- -- --
-		mp <- minusOrVoid		-- Power ... 
-		rTok <- many1 ( satisfy isDigit ) 
-		return ( read $ mp rTok :: Int )
-	    -- -- -- -- -- -- -- -- --
-	    -- -- -- -- -- -- -- -- --
-	    minusOrVoid :: ReadP ShowS
-	    minusOrVoid = do
-		c <- option '#' (char '-')
-		if c == '-'
-			then return $ (c:)
-			else return $ ("" ++)
+parseMonomial :: ReadP Monomial
+parseMonomial = explicitCoeffPath <++ implicitCoeffPath
+
 
 
 
  -- Parse polynomial; i.e. : [Monomial]
-parsePnml :: ReadP (D.DList Monomial)
-parsePnml  = do
+parsePolynomial :: ReadP (D.DList Monomial)
+parsePolynomial  = do
 	let next = do
-		hp <- parseMnl
+		hp <- parseMonomial
 		skipSpaces
 		optional $ char '+'
 		skipSpaces
-		parsePnml >>= ( \dl -> return ( hp `D.cons` dl ) )
-	  in next +++ ( parseMnl >>= ( \hp -> return hp >>= sToDL ) )
+		parsePolynomial >>= ( \dl -> return ( hp `D.cons` dl ) )
+	  in next +++ ( parseMonomial >>= ( \hp -> return hp >>= sToDL ) )
 
 
 parseEq :: ReadP Equation
 parseEq = do
 	skipSpaces
-	hpll <- parsePnml >>= toL
+	hpll <- parsePolynomial >>= toL
 	skipSpaces
 	string "="
 	skipSpaces
-	hplr <- parsePnml >>= toL
+	hplr <- parsePolynomial >>= toL
 	skipSpaces
 	return $ Eq (hpll, hplr)
 
@@ -130,11 +158,11 @@ parseEq = do
 
 
 readsMonomial :: ReadS Monomial
-readsMonomial = readP_to_S parseMnl
+readsMonomial = readP_to_S parseMonomial
 
 
 readsPolynomial :: ReadS Polynomial
-readsPolynomial = readP_to_S (parsePnml >>= toL)
+readsPolynomial = readP_to_S (parsePolynomial >>= toL)
 
 
 readsEquation :: ReadS Equation
@@ -143,10 +171,12 @@ readsEquation = readP_to_S parseEq
 readEquation :: String -> Equation
 readEquation s = let parsed = filter (\(_, r) -> null r) $ readsEquation s
 		    in case parsed of	[] -> error "Failed to parse the equation."
-					_ -> fst . last $ parsed
+					_ -> ( fst . last ) parsed
 
 instance Read Equation where
-  readsPrec _ str = readsEquation str
+  readsPrec _ str = let parsed = filter (\(_, r) -> null r) $ readsEquation str
+			in case parsed of	[] -> error "Failed to parse the equation."
+						_ -> [ last parsed ]
 
 instance Read Monomial where
   readsPrec _ str = readsMonomial str

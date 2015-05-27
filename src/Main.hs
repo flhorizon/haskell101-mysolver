@@ -7,6 +7,7 @@ import Control.Monad (join)
 import Control.Monad.Trans.Writer (execWriter)
 
 import Data.MyPolynomial.Type
+import Data.MyPolynomial.Parser
 
 import Solve
 
@@ -22,5 +23,5 @@ main = do
  	let error _ = hPutStrLn stderr "Usage: ./mySolver <quadratic equation>"
  	    proceed a = do
  	    	let	wrout = execWriter ( verboseSolve $ ( read  a :: Equation ) )
- 	    	  in	putStrLn $ (toList . join) wrout
+ 	    	  in  putStrLn ( (toList . join) wrout )
  	  in processArgs >>= either error proceed
