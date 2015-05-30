@@ -42,7 +42,9 @@ toL dl = return $ D.toList dl
 
 floatLitteral :: ReadP String
 floatLitteral = do
+	skipSpaces
 	sm <- option "" ( string "-" )  >>= toDL
+	skipSpaces
 	intdgs <- many1 ( satisfy isDigit ) >>= toDL	-- 1 or more digits before the .
 	dec <- decimalPart <++ return D.empty		-- maybe dot digits
 	exp <- exponentPart <++ return D.empty		-- maybe E (maybe '-') digits
@@ -69,22 +71,20 @@ minusOrVoid = do
 	
 		
 parseCoeff :: ReadP Float
-parseCoeff = do
-	skipSpaces			
+parseCoeff = do			
 	lTok <- floatLitteral 
 	return ( read $ lTok :: Float )
 
 parsePower :: ReadP Int
 parsePower = do
-	skipSpaces >> char '^' >> skipSpaces	
+	char '^' >> skipSpaces	
 	mp <- minusOrVoid	
 	rTok <- skipSpaces >> many1 ( satisfy isDigit ) 
 	return ( read $ mp rTok :: Int )
 	
 parseEqParam :: ReadP ()
 parseEqParam = do
-	skipSpaces
-	satisfy (\c -> c == 'x')
+	char 'x'
 	return ()
 
 
@@ -101,10 +101,13 @@ explicitCoeffPath = do
 -- (!parseFloat; !*; parseX ; option 1 parserPower)
 implicitCoeffPath :: ReadP Monomial
 implicitCoeffPath = do
+	sign <- skipSpaces >> option '#' ( char '-' )
+	skipSpaces
 	parseEqParam
 	skipSpaces
 	pow <- option 1 parsePower
-	return ( 1.0 :*^: pow )
+	case sign of	'-' -> return ( (-1.0) :*^: pow )
+			_ -> return ( 1.0 :*^: pow )
 
 
  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
@@ -119,7 +122,7 @@ implicitCoeffPath = do
 
  -- Parse monomial
 parseMonomial :: ReadP Monomial
-parseMonomial = explicitCoeffPath <++ implicitCoeffPath
+parseMonomial = skipSpaces >> (explicitCoeffPath <++ implicitCoeffPath)
 
 
 

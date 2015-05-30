@@ -102,7 +102,7 @@ prettyPolynomialSM :: IntMap Float -> ShowS
 prettyPolynomialSM = printsPolynomialSM prettyPolynomialS
 
 prettyPolynomialM :: IntMap Float -> String
-prettyPolynomialM m = printsPolynomialSM prettyPolynomialS m []
+prettyPolynomialM m = prettyPolynomialSM m []
 
 
 
