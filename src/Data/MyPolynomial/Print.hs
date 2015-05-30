@@ -46,7 +46,6 @@ printsPolynomialSM pfS mmap = ( pfS . sort ) $ consUp (smallest 0 mmap) mmap ([]
   where
     smallest k map = case lookupLT k map of { Nothing -> k;	Just (k, _) -> smallest k map; }
     consUp k map dl = case lookupGE k map of	Nothing -> dl
-    						Just (kn, 0) -> consUp (kn + 1) map dl
 						Just (kn, v) -> consUp (kn + 1) map (((v :*^: kn):) . dl)
    
 printsEquationS :: (Polynomial -> ShowS) -> Equation -> ShowS
@@ -62,7 +61,7 @@ printsEquationS pfS (Eq (l, r)) = memb l . showString " = " . memb r
 ---------------------------------------------------------------------------
 
 porcelainMonomialS :: Monomial -> ShowS
-porcelainMonomialS (c :*^: p) = shows c . showString " * x^" . shows p
+porcelainMonomialS (c :*^: p) = shows c . showString " * X^" . shows p
 
 porcelainPolynomialS :: Polynomial -> ShowS
 porcelainPolynomialS = printsPolynomialS porcelainMonomialS
@@ -82,7 +81,7 @@ porcelainPolynomialSM = printsPolynomialSM porcelainPolynomialS
 prettyMonomialS :: Monomial -> ShowS
 prettyMonomialS (0 :*^: _) = showString ""
 prettyMonomialS (c :*^: 0) = shows c
-prettyMonomialS (c :*^: 1) = shows c . showString " x"
+prettyMonomialS (c :*^: 1) = shows c . showString " X"
 prettyMonomialS (c :*^: p) = prettyMonomialS (c :*^: 1) . ('^':) . shows p
 
 prettyMonomial :: Monomial -> String
@@ -91,7 +90,8 @@ prettyMonomial mn =  prettyMonomialS mn ""
 
 
 prettyPolynomialS :: Polynomial -> ShowS
-prettyPolynomialS p = printsPolynomialS prettyMonomialS p
+prettyPolynomialS = ( printsPolynomialS prettyMonomialS ) . purgeHollow
+  where purgeHollow = filter ( \(c :*^: _) -> c /= 0 )
 
 prettyPolynomial :: Polynomial -> String
 prettyPolynomial p = prettyPolynomialS p ""

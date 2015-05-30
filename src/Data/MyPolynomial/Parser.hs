@@ -84,7 +84,7 @@ parsePower = do
 	
 parseEqParam :: ReadP ()
 parseEqParam = do
-	char 'x'
+	char 'X'
 	return ()
 
 

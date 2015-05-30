@@ -1,0 +1,60 @@
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+----------------                                         ----------------------
+----------------     Spécifications : mySolver         ----------------------
+----------------                                         ----------------------
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+
+Légende
+-------------------
+V Complet
+B Bonus
+| Sous-critère dans le même état que le super-critère
+x Explicitement incomplet, ou défectueux
+
+
+-------------------
+I- Obligatoires
+--------------------------------
+
+V	- Forme reduite :
+	c * x^0 + b * x^1 + a * x^2 = 0
+|		-> Les monomes implicites ( à coeff 0 ) doivent être
+			représentés si le degré de l'équation le permet.
+
+V	- Degré du polynome
+
+V	- La/les solutions ( signe du delta si sensé )
+|		-> Degré 1: S = {x} inclue dans |R
+|		-> Degré 2: S = {x} inclue dans |R²
+|		-> Degré 2: S = {x1, x2} inclues dans |R²
+|		-> Degré 2: S = {c1, c2} inclues dans |C²
+|		-> 2 reelles | double reelle degré 2 | 2 complexes | reelle degré 1
+|		-> pas de résolution (degré > 2)
+|		-> large:  a = b pour tout a == b de degré 0 :  S = |R
+V	- absurdité :  a = b pour tout a != b
+
+
+-------------------
+II- Bonus
+--------------------------------
+
+BV	- Forme naturelle :
+	c + bx + ax^2 = 0	(monomes à coeffs nuls non-affichés)
+	
+BV	- Parsing: forme naturelle
+|		-> '*' implicite
+|		-> '^1' implicite
+|		-> 'X^0' implicite
+|		-> monomes 0 * X^p implicites
+	
+BV	- Parsing: les puissances n'ont pas à être ordonnées et toutes présentes.
+	a * x^2 + 5 * x^0 = 0
+
+BV	- Monomes de puissance négative (MPN).
+|	-> lever les MPN
+|	-> tenir compte des solutions exclues
+  

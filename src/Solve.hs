@@ -69,8 +69,9 @@ tellSolutions delta (c1, c2) badRoots
 
 
 
-tellReduced :: M.IntMap Float -> Writer (D.DList ShowD) ()
-tellReduced map = tell $ toShowD ["Reduced form: ", porcelainPolynomialSM map "", " = 0\n"]
+tellReduced :: Int -> M.IntMap Float -> Writer (D.DList ShowD) ()
+tellReduced deg map = tell $ toShowD ["Reduced form: ", porcelainPolynomialSM dMap "", " = 0\n"]
+	where dMap = M.filterWithKey (\k _ -> k <= deg) map
 
 tellNatural :: M.IntMap Float -> Writer (D.DList ShowD) ()
 tellNatural map = tell $ toShowD ["Natural reduced form: ", prettyPolynomialM map, " = 0\n"]
@@ -89,7 +90,7 @@ tellForbidden frts = tell $ toShowD $ ["Excluded roots/solutions:\n"] ++ (showFo
 
 verboseSolve :: Equation -> Writer (D.DList ShowD) (Equation, Maybe Solution)
 verboseSolve eq = do
-	tellReduced mapPol
+	tellReduced deg mapPol
 	tellNatural mapPol
 	tell $ toShowD ["Polynomial degree: ", show deg, "\n"]
 	tellForbidden badRoots
