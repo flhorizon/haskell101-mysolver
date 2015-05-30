@@ -29,6 +29,12 @@ IFACESUBD = $(addprefix $(IFACED)/, $(SUBDIRS))
 IFACE_ = $(SRC_:.hs=.hi)
 IFACE = $(addprefix $(IFACED)/, $(IFACE_))
 
+TESTD := tests
+TESTS := tests.rb
+
+RUBY := $(shell which ruby)
+
+
 
 all: $(OBJD) $(BIN)
 
@@ -48,5 +54,8 @@ fclean: clean
 
 re: fclean all
 
+tests: $(BIN)
+	( cd $(TESTD) && $(RUBY) $(TESTS) ) 
 
-.PHONY: all clean fclean re
+
+.PHONY: all clean fclean re tests
