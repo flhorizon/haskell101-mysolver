@@ -28,22 +28,22 @@ V	- Forme reduite :
 V	- Degré du polynome
 
 V	- La/les solutions ( signe du delta si sensé )
+|		-> Speech correspondant à la solvabilité ( cf. ci-dessous )
 |		-> Degré 1: S = {x} inclue dans |R
 |		-> Degré 2: S = {x} inclue dans |R²
 |		-> Degré 2: S = {x1, x2} inclues dans |R²
 |		-> Degré 2: S = {c1, c2} inclues dans |C²
-|		-> 2 reelles | double reelle degré 2 | 2 complexes | reelle degré 1
 |		-> pas de résolution (degré > 2)
-|		-> large:  a = b pour tout a == b de degré 0 :  S = |R
-V	- absurdité :  a = b pour tout a != b
+|		-> large:  'a = b' pour tous a == b de degré 0 :  S = |R
+V	- absurdité :  'a = b' pour tous a != b
 
 
 -------------------
 II- Bonus
 --------------------------------
 
-BV	- Forme naturelle :
-	c + bx + ax^2 = 0	(monomes à coeffs nuls non-affichés)
+BV	- Sortie: forme réduite naturelle :
+	c + bx + ax^2 = 0	(monomes à coeffs nuls non-exprimés)
 	
 BV	- Parsing: forme naturelle
 |		-> '*' implicite

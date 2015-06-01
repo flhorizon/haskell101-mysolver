@@ -120,23 +120,28 @@ implicitCoeffPath = do
  --
 	
 
- -- Parse monomial
 parseMonomial :: ReadP Monomial
 parseMonomial = skipSpaces >> (explicitCoeffPath <++ implicitCoeffPath)
 
-
+ -- Wrapper using a boolean hint about the sign being reversed.
+htParseMonomial :: Bool -> ReadP Monomial
+htParseMonomial False = parseMonomial
+htParseMonomial _ =  parseMonomial >>= \(c :*^: p) -> return ((-c) :*^: p)
 
 
  -- Parse polynomial; i.e. : [Monomial]
 parsePolynomial :: ReadP (D.DList Monomial)
-parsePolynomial  = do
-	let next = do
-		hp <- parseMonomial
-		skipSpaces
-		optional $ char '+'
-		skipSpaces
-		parsePolynomial >>= ( \dl -> return ( hp `D.cons` dl ) )
-	  in next +++ ( parseMonomial >>= ( \hp -> return hp >>= sToDL ) )
+parsePolynomial  = goPoly False
+	where goPoly revHint = do
+		let next = do
+			hp <- htParseMonomial revHint
+			skipSpaces
+			bMinus <- look >>= \s -> case s of	('+':_) -> get >> return False
+								('-':_) -> get >> return True
+								_ -> pfail
+			skipSpaces
+			( goPoly bMinus ) >>= ( \dl -> return ( hp `D.cons` dl ) )
+				in next +++ ( htParseMonomial revHint >>= \mn -> return mn >>= sToDL )
 
 
 parseEq :: ReadP Equation

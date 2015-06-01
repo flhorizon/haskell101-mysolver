@@ -220,7 +220,7 @@ handleNegativePowers p = case (findNeg p) of	Nothing -> get >>= (\s -> state (\_
     badRoots (_ :*^: 0) = [] -- Should not happen.
     badRoots (c :*^: p)	| (-p) == 1 = ((:[]) . (:+ 0) . solveDeg1) $ toMap [zero, (c :*^: 1), zeroP 2]
 			| (-p) == 2 = bundle $ roots $ toMap [(c :*^: 2), zeroP 1, zeroP 0]
-			| otherwise = error $ "Will not solve: monomial of a higher absolute degree that 2:\n" ++ prettyMonomial (c :*^: p)
+			| otherwise = error $ "Will not solve: monomial of a higher absolute degree than 2:\n" ++ prettyMonomial (c :*^: p)
 
     findNeg = find (\(c :*^: p) -> p < 0 && c /= 0)
 
