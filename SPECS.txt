@@ -2,59 +2,59 @@
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 ----------------                                         ----------------------
-----------------     Spécifications : mySolver         ----------------------
+----------------     Specifications : mySolver           ----------------------
 ----------------                                         ----------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
 
-Légende
+Legend
 -------------------
-V Complet
-B Bonus
-| Sous-critère dans le même état que le super-critère
-x Explicitement incomplet, ou défectueux
+V Completed
+B Extra
+| Sub-criterion, same state as above
+x Incomplete, broken
 
 
 -------------------
-I- Obligatoires
+I- Mandatory features
 --------------------------------
 
-V	- Forme reduite :
+V	- Reduced form :
 	c * x^0 + b * x^1 + a * x^2 = 0
-|		-> Les monomes implicites ( à coeff 0 ) doivent être
-			représentés si le degré de l'équation le permet.
+|		-> Implicit monomes ( 0 coeff ) may be represented if the equation
+            degree allows it.
 
-V	- Degré du polynome
+V	- Polynome degree
 
-V	- La/les solutions ( signe du delta si sensé )
-|		-> Speech correspondant à la solvabilité ( cf. ci-dessous )
-|		-> Degré 1: S = {x} inclue dans |R
-|		-> Degré 2: S = {x} inclue dans |R²
-|		-> Degré 2: S = {x1, x2} inclues dans |R²
-|		-> Degré 2: S = {c1, c2} inclues dans |C²
-|		-> pas de résolution (degré > 2)
-|		-> large:  'a = b' pour tous a == b de degré 0 :  S = |R
-V	- absurdité :  'a = b' pour tous a != b
+V	- Solution(s) ( delta sign if appropriate )
+|		-> Verbose output about solvability
+|		-> Degree 1: S = {x} belongs to |R
+|		-> Degree 2: S = {x} belongs to |R²
+|		-> Degree 2: S = {x1, x2} belong to |R²
+|		-> Degree 2: S = {c1, c2} belong to |C²
+|		-> no solution from |R, |R², |C² (degree > 2)
+|		-> broad:  'a = b' for all a == b of degree 0 :  S = |R
+V	- absurd :  'a = b' for all a != b
 
 
 -------------------
-II- Bonus
+II- Extra features
 --------------------------------
 
-BV	- Sortie: forme réduite naturelle :
-	c + bx + ax^2 = 0	(monomes à coeffs nuls non-exprimés)
+BV	- Output: natural form
+	c + bx + ax^2 = 0	(null coeffs monomes are not expressed)
 	
-BV	- Parsing: forme naturelle
-|		-> '*' implicite
-|		-> '^1' implicite
-|		-> 'X^0' implicite
-|		-> monomes 0 * X^p implicites
+BV	- Parsing: natural form
+|		-> '*' implicit
+|		-> '^1' implicit
+|		-> 'X^0' implicit
+|		-> implicit 0 * X^p monomes
 	
-BV	- Parsing: les puissances n'ont pas à être ordonnées et toutes présentes.
+BV	- Parsing: powers don't need to be ordered neither all expressed.
 	a * x^2 + 5 * x^0 = 0
 
-BV	- Monomes de puissance négative (MPN).
-|	-> lever les MPN
-|	-> tenir compte des solutions exclues
+BV	- Negative power monomes (NPM)
+|	-> lift NPMs
+|	-> consider excluded solutions
   
