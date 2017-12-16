@@ -5,9 +5,9 @@ A projet to learn Haskell by pratice.
 
 A quadratic equation parser / solver.
 
-##Build
+## Build
 
-###Dependencies
+### Dependencies
 - GNU make 4
 - ghc 7.6.3
 - dlist 0.8.0.2
@@ -18,7 +18,7 @@ A quadratic equation parser / solver.
 
 `$ make` 
 
-##Example
+## Example
 `$ ./mySolver 'X + 1 = -X^-1'`
 ```
 Reduced form: 1.0 * X^0 + 1.0 * X^1 + 1.0 * X^2 = 0
